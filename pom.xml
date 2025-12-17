@@ -31,14 +31,24 @@
 		<spring-ai.version>1.1.2</spring-ai.version>
 	</properties>
 	<dependencies>
+        <!--MONGODB-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
 		</dependency>
+        <!--WEB-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
+
+        <!-- Utilities -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+
+        <!--SPRING AI-->
 		<dependency>
 			<groupId>org.springframework.ai</groupId>
 			<artifactId>spring-ai-starter-model-chat-memory-repository-mongodb</artifactId>
@@ -48,6 +58,7 @@
 			<artifactId>spring-ai-starter-model-openai</artifactId>
 		</dependency>
 
+        <!--TEST-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
