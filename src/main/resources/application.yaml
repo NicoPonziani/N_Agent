@@ -25,6 +25,9 @@ github:
   app:
     id: ${GITHUB_APP_ID}
     private-key-path: ${GITHUB_PRIVATE_KEY_PATH}
+  api:
+    base-url: https://api.github.com
+    installation-token-url: https://api.github.com/app/installations/{installation_id}/access_tokens
 
 logging:
   level:
