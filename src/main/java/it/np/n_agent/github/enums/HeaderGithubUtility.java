@@ -1,4 +1,4 @@
-package it.np.n_agent.dto.github;
+package it.np.n_agent.github.enums;
 
 import lombok.Getter;
 
