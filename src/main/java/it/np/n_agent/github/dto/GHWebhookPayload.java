@@ -1,4 +1,4 @@
-package it.np.n_agent.dto.github;
+package it.np.n_agent.github.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

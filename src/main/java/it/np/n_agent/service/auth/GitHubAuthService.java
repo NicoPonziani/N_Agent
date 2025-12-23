@@ -1,7 +1,8 @@
-package it.np.n_agent.service;
+package it.np.n_agent.service.auth;
 
 import io.jsonwebtoken.Jwts;
-import it.np.n_agent.dto.github.HeaderGithubUtility;
+import it.np.n_agent.exception.GitHubApiException;
+import it.np.n_agent.github.enums.HeaderGithubUtility;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -96,7 +98,7 @@ public class GitHubAuthService {
                     return token;
                 })
                 .timeout(Duration.ofSeconds(10))
-                .doOnError(e -> log.error("Failed to get installation token", e))
+                .onErrorMap(error -> new GitHubApiException("Failed to get installation token", HttpStatus.BAD_GATEWAY, error))
                 .cache(Duration.ofMinutes(50)); // Cache per 50 min (scade dopo 60)
     }
 
