@@ -1,7 +1,6 @@
 package it.np.n_agent.config;
 
-import it.np.n_agent.dto.github.HeaderGithubUtility;
-import org.springframework.beans.factory.annotation.Qualifier;
+import it.np.n_agent.github.enums.HeaderGithubUtility;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,8 +14,7 @@ public class WebClientConfig {
         return WebClient.builder();
     }
 
-    @Bean
-    @Qualifier("githubWebClient")
+    @Bean("githubWebClient")
     public WebClient githubWebClient(WebClient.Builder builder,
                                      @Value("${github.api.base-url}") String githubBaseUrl) {
         return builder

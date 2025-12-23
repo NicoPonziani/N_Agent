@@ -5,15 +5,20 @@ spring:
     base-path: /code-agent
   data:
     mongodb:
-    uri: mongodb://localhost:27017/code-agent
+      uri: mongodb://localhost:27017/code-agent
   ai:
     openai:
       api-key: ${OPEN_AI_KEY}
       chat:
         options:
           model: gpt-4o-mini
-          temperature: 0.7
-
+          temperature: 0.2
+          base-url: https://api.openai.com/v1
+          max-tokens: 2000
+          frequency-penalty: 0.5
+          presence-penalty: 0.3
+      connection-timeout: 10s
+      read-timeout: 120s
 server:
   port: 8080
 
