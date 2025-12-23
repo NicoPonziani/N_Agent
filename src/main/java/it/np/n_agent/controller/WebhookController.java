@@ -1,6 +1,6 @@
 package it.np.n_agent.controller;
 
-import it.np.n_agent.dto.github.GHWebhookPayload;
+import it.np.n_agent.github.dto.GHWebhookPayload;
 import it.np.n_agent.service.WebhookService;
 import it.np.n_agent.utilities.RequestUtility;
 import org.slf4j.Logger;
@@ -40,15 +40,9 @@ public class WebhookController {
                     return requestUtility.parsePayload(rawPayload, GHWebhookPayload.class);
                 })
                 .subscribeOn(Schedulers.boundedElastic())
-                .flatMap(payload -> {
-                    webhookService.processGithubWebhook(payload, eventType)
-                            .subscribeOn(Schedulers.boundedElastic())
-                            .subscribe(
-                                    result -> log.info("Webhook processed: {}", result),
-                                    error -> log.error("Webhook processing failed", error)
-                            );
-                    return Mono.just(ResponseEntity.ok("WEBHOOK RECEIVED"));
-                });
+                .flatMap(payload ->  webhookService.processGithubWebhook(payload, eventType))
+                .then(Mono.just(ResponseEntity.ok("WEBHOOK PROCESSED")))
+                .doOnSuccess(response -> log.info("=== WEBHOOK PROCESSED SUCCESSFULLY ==="));
     }
 
 

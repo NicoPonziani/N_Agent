@@ -1,36 +1,29 @@
 package it.np.n_agent.service;
 
-import it.np.n_agent.dto.github.HeaderGithubUtility;
-import it.np.n_agent.dto.github.EventType;
-import it.np.n_agent.dto.github.GHWebhookPayload;
+import it.np.n_agent.github.enums.EventType;
+import it.np.n_agent.github.dto.GHWebhookPayload;
 import it.np.n_agent.exception.WebhookMainException;
+import it.np.n_agent.service.auth.GitHubAuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
-import java.time.Duration;
 
 @Service
 public class WebhookService {
 
     private static final Logger log = LoggerFactory.getLogger(WebhookService.class);
 
-    private final WebClient githubWebClient;
-    private final GitHubAuthService authService;
+    private final AiService aiService;
+    private final GithubService githubService;
 
     @Autowired
-    public WebhookService(
-            @Qualifier("githubWebClient") WebClient githubWebClient,
-            GitHubAuthService authService) {
-        this.githubWebClient = githubWebClient;
-        this.authService = authService;
+    public WebhookService(AiService aiService, GithubService githubService) {
+        this.aiService = aiService;
+        this.githubService = githubService;
     }
 
     public Mono<Boolean> processGithubWebhook(GHWebhookPayload payload, String eventType) {
@@ -43,12 +36,14 @@ public class WebhookService {
 
     private Mono<Boolean> handlePullRequestEvent(GHWebhookPayload payload) {
         Long installationId = payload.getInstallation().getId();
+        Long prNumber = payload.getPullRequest().getNumber();
         final String apiPath = payload.getPullRequest().getUrl();
 
-        return authService.getInstallationToken(installationId)
-                          .flatMap(installationToken -> retrieveDiff(apiPath,installationToken))
-                          .map(response -> true)
-                          .subscribeOn(Schedulers.boundedElastic());
+        return githubService.retrieveDiff(apiPath,installationId)
+                            .flatMap(aiService::analyzeDiff)
+                            .flatMap(diff -> aiService.handleAiResponse(diff, prNumber, installationId))
+                            .map(response -> true)
+                            .subscribeOn(Schedulers.boundedElastic());
     }
 
     private Mono<Boolean> handlePushEvent(GHWebhookPayload payload) {
@@ -57,27 +52,4 @@ public class WebhookService {
     }
 
 
-    public Mono<String> retrieveDiff(String apiPath, String installationToken){
-        log.info("Fetching diff from: {}", apiPath);
-        return githubWebClient.get()
-                .uri(apiPath)
-                .header("Accept", HeaderGithubUtility.APPLICATION_VND_V3_DIFF.getHeaderValue())
-                .header("Authorization", "token " + installationToken)
-                .retrieve()
-                .onStatus(
-                        HttpStatusCode::is4xxClientError,
-                        response -> {
-                            log.error("GitHub API error {}: {}", response.statusCode(), apiPath);
-                            throw new WebhookMainException("Failed to fetch PR diff: " + response.statusCode(),HttpStatus.BAD_GATEWAY);
-                        }
-                )
-                .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(30))
-                .retry(2)
-                .doOnSuccess(diffContent -> {
-                    log.info("Fetched diff content: {} characters", diffContent.length());
-                    log.debug("Diff preview:\n{}", diffContent.substring(0, Math.min(500, diffContent.length())));
-                })
-                .doOnError(error -> log.error("Error fetching diff: {}", error.getMessage()));
-    }
 }
