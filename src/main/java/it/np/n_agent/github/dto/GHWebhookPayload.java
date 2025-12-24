@@ -39,6 +39,10 @@ public class GHWebhookPayload {
         private Integer deletions;
         @JsonProperty("changed_files")
         private Integer changedFiles;
+        @JsonProperty("review_comments_url")
+        private String reviewCommentsUrl;
+        @JsonProperty("comments_url")
+        private String commentsUrl;
     }
 
     @Data

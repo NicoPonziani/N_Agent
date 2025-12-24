@@ -1,9 +1,10 @@
 package it.np.n_agent.service;
 
-import it.np.n_agent.github.enums.EventType;
-import it.np.n_agent.github.dto.GHWebhookPayload;
+import it.np.n_agent.ai.dto.CodeAnalysisResult;
 import it.np.n_agent.exception.WebhookMainException;
-import it.np.n_agent.service.auth.GitHubAuthService;
+import it.np.n_agent.github.dto.GHWebhookPayload;
+import it.np.n_agent.github.enums.EventType;
+import lombok.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +20,13 @@ public class WebhookService {
 
     private final AiService aiService;
     private final GithubService githubService;
+    private final NotificationService notificationService;
 
     @Autowired
-    public WebhookService(AiService aiService, GithubService githubService) {
+    public WebhookService(AiService aiService, GithubService githubService, NotificationService notificationService) {
         this.aiService = aiService;
         this.githubService = githubService;
+        this.notificationService = notificationService;
     }
 
     public Mono<Boolean> processGithubWebhook(GHWebhookPayload payload, String eventType) {
@@ -35,14 +38,28 @@ public class WebhookService {
     }
 
     private Mono<Boolean> handlePullRequestEvent(GHWebhookPayload payload) {
-        Long installationId = payload.getInstallation().getId();
-        Long prNumber = payload.getPullRequest().getNumber();
+        final Long installationId = payload.getInstallation().getId();
+        final Long prNumber = payload.getPullRequest().getNumber();
         final String apiPath = payload.getPullRequest().getUrl();
+        final String commitSha = payload.getPullRequest().getHead().getSha();
+        final String owner = payload.getPullRequest().getUser().getLogin();
+        final String repo = payload.getRepository().getName();
 
         return githubService.retrieveDiff(apiPath,installationId)
                             .flatMap(aiService::analyzeDiff)
                             .flatMap(diff -> aiService.handleAiResponse(diff, prNumber, installationId))
-                            .map(response -> true)
+                            .flatMap(response -> Mono.just(
+                                    WebhookProcessResult.builder()
+                                            .installationId(installationId)
+                                            .commitSha(commitSha)
+                                            .url(apiPath)
+                                            .prNumber(prNumber)
+                                            .owner(owner)
+                                            .repo(repo)
+                                            .analysisResult(response)
+                                            .build()
+                            ))
+                            .flatMap(notificationService::sendNotification)
                             .subscribeOn(Schedulers.boundedElastic());
     }
 
@@ -51,5 +68,14 @@ public class WebhookService {
         return Mono.just(false);
     }
 
+    @Builder
+    public record WebhookProcessResult(Long installationId,
+                                       String commitSha,
+                                       String url,
+                                       Long prNumber,
+                                       String owner,
+                                       String repo,
+                                       CodeAnalysisResult analysisResult) {
 
+    }
 }
