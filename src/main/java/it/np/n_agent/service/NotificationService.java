@@ -4,6 +4,7 @@ import it.np.n_agent.exception.GitHubApiException;
 import it.np.n_agent.github.enums.HeaderGithubUtility;
 import it.np.n_agent.service.WebhookService.WebhookProcessResult;
 import it.np.n_agent.service.auth.GitHubAuthService;
+import it.np.n_agent.utilities.CommentsUtility;
 import lombok.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+
+import static it.np.n_agent.utilities.CommentsUtility.formatCommentBody;
+import static it.np.n_agent.utilities.CommentsUtility.formatGeneralCommentBody;
 
 @Service
 public class NotificationService {
@@ -52,24 +56,10 @@ public class NotificationService {
     }
 
     private NotificationRequest buildNotificationRequest(WebhookProcessResult request){
-        String generalComment = String.format("""
-                ## 🤖 AI Code Review
-                
-                **Summary**: %s
-                **Recommendation**: %s
-                **Regret Probability**: %.1f%%
-                **Issues Found**: %d
-                
-                See inline comments in Files Changed tab for details.
-                """,
-                request.analysisResult().getSummary(),
-                request.analysisResult().getRecommendation().name(),
-                request.analysisResult().getRegretProbability() * 100,
-                request.analysisResult().getIssues().size()
-        );
+        log.info("Building notification request for PR #{}", request.prNumber());
         List<InlineCommentRequest> inlineCommentRequests = request.analysisResult().getIssues().stream()
                 .map(issue -> InlineCommentRequest.builder()
-                        .body(issue.getSuggestion())
+                        .body(formatCommentBody(issue.getSeverity(),issue.getType(), issue.getMessage(), issue.getSuggestion()))
                         .path(issue.getFile())
                         .line(issue.getLine())
                         .side(SideLine.RIGHT.name())
@@ -78,7 +68,12 @@ public class NotificationService {
 
         return NotificationRequest.builder()
                 .commitId(request.commitSha())
-                .body(generalComment)
+                .body(formatGeneralCommentBody(
+                        request.analysisResult().getSummary(),
+                        request.analysisResult().getRecommendation().name(),
+                        request.analysisResult().getRegretProbability() * 100,
+                        request.analysisResult().getIssues().size())
+                )
                 .event(request.analysisResult().getRecommendation().name())
                 .comments(inlineCommentRequests)
                 .build();
@@ -95,3 +90,37 @@ public class NotificationService {
         RIGHT
     }
 }
+
+/*
+List<InlineCommentRequest> inlineCommentRequests = request.analysisResult().getIssues().stream()
+        .map(issue -> {
+            String severityEmoji = switch (issue.getSeverity().toUpperCase()) {
+                case "CRITICAL" -> "🔴";
+                case "HIGH" -> "🟠";
+                case "MEDIUM" -> "🟡";
+                default -> "🔵";
+            };
+
+            String commentBody = String.format("""
+                    %s **%s** - %s
+
+                    **Issue:** %s
+
+                    %s
+                    """,
+                    severityEmoji,
+                    issue.getSeverity().toUpperCase(),
+                    issue.getType(),
+                    issue.getMessage(),
+                    issue.getSuggestion() != null ? "**Suggestion:** " + issue.getSuggestion() : ""
+            );
+
+            return InlineCommentRequest.builder()
+                    .body(commentBody)
+                    .path(issue.getFile())
+                    .line(issue.getLine())
+                    .side(SideLine.RIGHT.name())
+                    .build();
+        }).toList();
+
+ */

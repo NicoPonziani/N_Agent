@@ -2,6 +2,7 @@ package it.np.n_agent.service.auth;
 
 import io.jsonwebtoken.Jwts;
 import it.np.n_agent.exception.GitHubApiException;
+import it.np.n_agent.exception.WebhookMainException;
 import it.np.n_agent.github.enums.HeaderGithubUtility;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -91,6 +93,10 @@ public class GitHubAuthService {
                 .header("Authorization", "Bearer " + jwt)
                 .header("Accept", HeaderGithubUtility.APPLICATION_VND_V3_JSON.getHeaderValue())
                 .retrieve()
+                .onStatus(
+                        status -> status.is5xxServerError() || status.is4xxClientError(),
+                        ClientResponse::createException
+                )
                 .bodyToMono(Map.class)
                 .map(response -> {
                     String token = (String) response.get("token");
@@ -103,7 +109,7 @@ public class GitHubAuthService {
     }
 
     private PrivateKey loadPrivateKey() throws IOException {
-        log.info("Loading private key from: {}", PRIVATE_KEY_PATH);
+        log.info("Loading private key from configured path");
 
         String keyContent;
 

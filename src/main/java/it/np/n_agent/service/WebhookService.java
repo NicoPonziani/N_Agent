@@ -3,6 +3,7 @@ package it.np.n_agent.service;
 import it.np.n_agent.ai.dto.CodeAnalysisResult;
 import it.np.n_agent.exception.WebhookMainException;
 import it.np.n_agent.github.dto.GHWebhookPayload;
+import it.np.n_agent.github.enums.ActionType;
 import it.np.n_agent.github.enums.EventType;
 import lombok.Builder;
 import org.slf4j.Logger;
@@ -38,6 +39,12 @@ public class WebhookService {
     }
 
     private Mono<Boolean> handlePullRequestEvent(GHWebhookPayload payload) {
+        log.info("Processing Pull Request event for PR #{}", payload.getPullRequest().getNumber());
+        if(ActionType.CLOSED.name().equalsIgnoreCase(payload.getAction())){
+            log.info("Pull Request #{} is closed. No action taken.", payload.getPullRequest().getNumber());
+            return Mono.just(true);
+        }
+
         final Long installationId = payload.getInstallation().getId();
         final Long prNumber = payload.getPullRequest().getNumber();
         final String apiPath = payload.getPullRequest().getUrl();

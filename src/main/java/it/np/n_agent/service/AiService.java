@@ -9,6 +9,8 @@ import it.np.n_agent.repository.IssueRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.ChatOptions;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static it.np.n_agent.utilities.ResourceUtility.loadPrompt;
@@ -37,8 +40,8 @@ public class AiService {
         log.info("Analyzing diff START");
 
         return Mono.fromCallable(() ->
-            chatModel.prompt(String.format("Analyze the following code diff and provide suggestions for improvements %s.",diff))
-                     .user(loadPrompt("historical_issue_prompt.md"))
+            chatModel.prompt(loadPrompt("historical_issue_prompt.md").getContentAsString(StandardCharsets.UTF_8))
+                     .user(String.format("Analyze the following code diff and provide suggestions for improvements\n%s.",diff))
                      .toolCallbacks(ToolCallbacks.from(new HistoricalIssuesFunction(issueRepository)))
                      .call()
                      .entity(CodeAnalysisResult.class)
@@ -58,6 +61,11 @@ public class AiService {
             }
             case REQUEST_CHANGES, COMMENT -> {
                 log.info("Number of issues found: {}", analysis.getIssuesCount());
+
+                if(analysis.getIssues() == null || analysis.getIssues().isEmpty()){
+                    log.info("No issues found ✅");
+                    yield Mono.just(analysis);
+                }
 
                 List<HistoricalIssueEntity> issues = analysis.getIssues().stream()
                         .map(issue -> HistoricalIssueEntity.builder()
