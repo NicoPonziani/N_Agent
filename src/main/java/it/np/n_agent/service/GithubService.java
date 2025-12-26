@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -40,11 +41,8 @@ public class GithubService {
                                     .header("Authorization", "token " + installationToken)
                                     .retrieve()
                                     .onStatus(
-                                            HttpStatusCode::is4xxClientError,
-                                            response -> {
-                                                log.error("GitHub API error {}: {}", response.statusCode(), apiPath);
-                                                throw new WebhookMainException("Failed to fetch PR diff: " + response.statusCode(),HttpStatus.BAD_GATEWAY);
-                                            }
+                                            status -> status.is5xxServerError() || status.is4xxClientError(),
+                                            ClientResponse::createException
                                     )
                                     .bodyToMono(String.class)
                                     .timeout(Duration.ofSeconds(30))
