@@ -1,6 +1,6 @@
 package it.np.n_agent.controller;
 
-import it.np.n_agent.github.dto.GHWebhookPayload;
+import it.np.n_agent.github.enums.EventType;
 import it.np.n_agent.service.WebhookService;
 import it.np.n_agent.utilities.RequestUtility;
 import org.slf4j.Logger;
@@ -37,7 +37,7 @@ public class WebhookController {
 
         return Mono.fromCallable(() -> {
                     requestUtility.validateHmac(rawPayload, signature);
-                    return requestUtility.parsePayload(rawPayload, GHWebhookPayload.class);
+                    return EventType.retrievePayload(rawPayload, eventType, requestUtility);
                 })
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(payload ->  webhookService.processGithubWebhook(payload, eventType))
