@@ -90,37 +90,3 @@ public class NotificationService {
         RIGHT
     }
 }
-
-/*
-List<InlineCommentRequest> inlineCommentRequests = request.analysisResult().getIssues().stream()
-        .map(issue -> {
-            String severityEmoji = switch (issue.getSeverity().toUpperCase()) {
-                case "CRITICAL" -> "🔴";
-                case "HIGH" -> "🟠";
-                case "MEDIUM" -> "🟡";
-                default -> "🔵";
-            };
-
-            String commentBody = String.format("""
-                    %s **%s** - %s
-
-                    **Issue:** %s
-
-                    %s
-                    """,
-                    severityEmoji,
-                    issue.getSeverity().toUpperCase(),
-                    issue.getType(),
-                    issue.getMessage(),
-                    issue.getSuggestion() != null ? "**Suggestion:** " + issue.getSuggestion() : ""
-            );
-
-            return InlineCommentRequest.builder()
-                    .body(commentBody)
-                    .path(issue.getFile())
-                    .line(issue.getLine())
-                    .side(SideLine.RIGHT.name())
-                    .build();
-        }).toList();
-
- */

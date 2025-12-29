@@ -2,7 +2,8 @@ package it.np.n_agent.service;
 
 import it.np.n_agent.ai.dto.CodeAnalysisResult;
 import it.np.n_agent.exception.WebhookMainException;
-import it.np.n_agent.github.dto.GHWebhookPayload;
+import it.np.n_agent.github.dto.GHWebhookInstallationPaylaod;
+import it.np.n_agent.github.dto.GHWebhookPrPayload;
 import it.np.n_agent.github.enums.ActionType;
 import it.np.n_agent.github.enums.EventType;
 import lombok.Builder;
@@ -22,23 +23,38 @@ public class WebhookService {
     private final AiService aiService;
     private final GithubService githubService;
     private final NotificationService notificationService;
+    private final UserSettingService userSettingService;
 
     @Autowired
-    public WebhookService(AiService aiService, GithubService githubService, NotificationService notificationService) {
+    public WebhookService(AiService aiService, GithubService githubService, NotificationService notificationService, UserSettingService userSettingService) {
         this.aiService = aiService;
         this.githubService = githubService;
         this.notificationService = notificationService;
+        this.userSettingService = userSettingService;
     }
 
-    public Mono<Boolean> processGithubWebhook(GHWebhookPayload payload, String eventType) {
+    public Mono<Boolean> processGithubWebhook(Object payload, String eventType) {
         return switch (EventType.fromValue(eventType)) {
-            case PUSH -> handlePushEvent(payload);
-            case PULL_REQUEST -> handlePullRequestEvent(payload);
+            case PUSH -> handlePushEvent((GHWebhookPrPayload) payload);
+            case PULL_REQUEST -> handlePullRequestEvent((GHWebhookPrPayload) payload);
+            case INSTALLATION -> handleInstallationEvent((GHWebhookInstallationPaylaod) payload);
             default -> Mono.error(new WebhookMainException("Unsupported event type", HttpStatus.BAD_REQUEST));
         };
     }
 
-    private Mono<Boolean> handlePullRequestEvent(GHWebhookPayload payload) {
+    private Mono<Boolean> handleInstallationEvent(GHWebhookInstallationPaylaod payload) {
+        log.info("Processing Installation event for installation ID {} action {}", payload.getInstallation().getId(),payload.getAction());
+        if(ActionType.CREATED.name().equalsIgnoreCase(payload.getAction()))
+            return userSettingService.buildUserSetting(payload)
+                    .flatMap(userSettingService::saveUserSettings);
+        else if (ActionType.DELETED.name().equalsIgnoreCase(payload.getAction()))
+            return userSettingService.deleteUserSettings(payload.getInstallation().getId(),payload.getSender().getId());
+
+        log.info("No action taken for installation event with action: {}", payload.getAction());
+        return Mono.just(true);
+    }
+
+    private Mono<Boolean> handlePullRequestEvent(GHWebhookPrPayload payload) {
         log.info("Processing Pull Request event for PR #{}", payload.getPullRequest().getNumber());
         if(ActionType.CLOSED.name().equalsIgnoreCase(payload.getAction())){
             log.info("Pull Request #{} is closed. No action taken.", payload.getPullRequest().getNumber());
@@ -70,7 +86,7 @@ public class WebhookService {
                             .subscribeOn(Schedulers.boundedElastic());
     }
 
-    private Mono<Boolean> handlePushEvent(GHWebhookPayload payload) {
+    private Mono<Boolean> handlePushEvent(GHWebhookPrPayload payload) {
         log.info("Push event not implemented yet");
         return Mono.just(false);
     }

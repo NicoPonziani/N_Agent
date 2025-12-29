@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GHWebhookPayload {
+public class GHWebhookPrPayload {
 
     private String action;  // "opened", "reopened", "synchronize"
 
