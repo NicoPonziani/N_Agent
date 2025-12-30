@@ -6,6 +6,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.StreamUtils;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class ResourceUtility {
 
@@ -22,4 +26,17 @@ public class ResourceUtility {
         log.info("✅ Loaded prompt: {} ", promptPath);
         return resource;
     }
+
+    public static String loadPromptAsString(String promptPath) {
+        Resource resource = loadPrompt(promptPath);
+        try {
+            String result = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+            log.info("✅ Loaded prompt as a String: {} ", promptPath);
+            return result;
+        } catch (IOException e) {
+            log.error("Failed to read prompt file: {}", promptPath, e);
+            throw new WebhookMainException(String.format("Failed to read prompt file: %s", promptPath), HttpStatus.INTERNAL_SERVER_ERROR,e);
+        }
+    }
+
 }

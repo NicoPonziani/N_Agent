@@ -6,11 +6,10 @@ import it.np.n_agent.entity.HistoricalIssueEntity;
 import it.np.n_agent.exception.AiAnalysisException;
 import it.np.n_agent.exception.MongoDbException;
 import it.np.n_agent.repository.IssueRepository;
+import it.np.n_agent.utilities.PromptUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -21,6 +20,7 @@ import reactor.core.scheduler.Schedulers;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.AnalysisRulesDto;
 import static it.np.n_agent.utilities.ResourceUtility.loadPrompt;
 
 @Service
@@ -36,12 +36,11 @@ public class AiService {
         this.issueRepository = issueRepository;
     }
 
-    public Mono<CodeAnalysisResult> analyzeDiff(String diff){
+    public Mono<CodeAnalysisResult> analyzeDiff(String diff, AnalysisRulesDto rules){
         log.info("Analyzing diff START");
-
         return Mono.fromCallable(() ->
             chatModel.prompt(loadPrompt("historical_issue_prompt.md").getContentAsString(StandardCharsets.UTF_8))
-                     .user(String.format("Analyze the following code diff and provide suggestions for improvements\n%s.",diff))
+                     .user(PromptUtility.generatePullRequestPrompt("user_analysis_rules.md", rules,diff))
                      .toolCallbacks(ToolCallbacks.from(new HistoricalIssuesFunction(issueRepository)))
                      .call()
                      .entity(CodeAnalysisResult.class)

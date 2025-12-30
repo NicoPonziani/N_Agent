@@ -56,6 +56,8 @@ public class UserSettingDto {
         @Data
         @Builder
         public static class AnalysisRulesDto {
+            private Boolean nullPointerPrediction;
+            private Boolean debtEstimation;
             private Boolean detectTODOs;
             private Boolean predictRegret;
             private Boolean checkComplexity;

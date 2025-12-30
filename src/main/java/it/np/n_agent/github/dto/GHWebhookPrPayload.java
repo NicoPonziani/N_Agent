@@ -15,6 +15,7 @@ public class GHWebhookPrPayload {
     private Repository repository;
     private Installation installation;
     private Integer number;
+    private Sender sender;
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -80,5 +81,12 @@ public class GHWebhookPrPayload {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Installation {
         private Long id;  // Per identificare l'utente univocamente
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Sender {
+        private String login;
+        private Long id;
     }
 }

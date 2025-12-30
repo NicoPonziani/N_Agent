@@ -37,3 +37,4 @@ github:
 logging:
   level:
     it.np.n_agent: DEBUG
+    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG
