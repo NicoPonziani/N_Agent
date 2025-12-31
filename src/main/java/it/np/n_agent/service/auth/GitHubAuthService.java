@@ -2,7 +2,6 @@ package it.np.n_agent.service.auth;
 
 import io.jsonwebtoken.Jwts;
 import it.np.n_agent.exception.GitHubApiException;
-import it.np.n_agent.exception.WebhookMainException;
 import it.np.n_agent.github.config.GitHubConfig;
 import it.np.n_agent.github.enums.HeaderGithubUtility;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -13,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

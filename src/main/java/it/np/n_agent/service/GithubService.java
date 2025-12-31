@@ -1,7 +1,6 @@
 package it.np.n_agent.service;
 
 import it.np.n_agent.exception.GitHubApiException;
-import it.np.n_agent.exception.WebhookMainException;
 import it.np.n_agent.github.enums.HeaderGithubUtility;
 import it.np.n_agent.service.auth.GitHubAuthService;
 import org.slf4j.Logger;
@@ -9,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
