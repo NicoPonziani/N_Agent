@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 @Data
@@ -21,7 +22,6 @@ public class UserSettingDto {
     @NotNull(message = "githubInstallationId cannot be null")
     private Long githubInstallationId;
     @Valid
-    @NotNull(message = "account cannot be null")
     private AccountInfoDto account;
     @Valid
     private List<RepositoryConfigDto> repositories;
@@ -31,10 +31,8 @@ public class UserSettingDto {
     @Data
     @Builder
     public static class AccountInfoDto {
-        @NotBlank(message = "login cannot be blank")
         private String login;
         private AccountType type;
-        @NotBlank(message = "email cannot be blank")
         private String email;
         private String name;
     }
