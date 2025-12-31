@@ -1,0 +1,84 @@
+# ============================================
+# APPLICATION PROPERTIES - DEVELOPMENT PROFILE
+# ============================================
+# Profile: dev (local development)
+# Use: mvn spring-boot:run (default)
+# ============================================
+
+spring:
+  application:
+    name: n_agent-dev
+  webflux:
+    base-path: /code-agent
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/code-agent-dev}
+  ai:
+    openai:
+      api-key: ${OPEN_AI_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.2
+          max-tokens: 2000
+          frequency-penalty: 0.5
+          presence-penalty: 0.3
+      connection-timeout: 10s
+      read-timeout: 120s
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+    include-stacktrace: always  # Sempre stacktrace in dev
+
+webhook:
+  github:
+    secret: ${GITHUB_WEBHOOK_SECRET}
+
+github:
+  app:
+    id: ${GITHUB_APP_ID}
+    private-key-path: ${GITHUB_PRIVATE_KEY_PATH:./code-analisys-agent.2025-12-17.private-key.pem}
+  api:
+    base-url: https://api.github.com
+    installation-token-url: https://api.github.com/app/installations/{installation_id}/access_tokens
+
+# ============================================
+# LOGGING CONFIGURATION - DEVELOPMENT
+# ============================================
+logging:
+  level:
+    root: INFO
+    it.np.n_agent: DEBUG
+    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG
+    org.springframework.data.mongodb.core: DEBUG
+    org.springframework.web.reactive: DEBUG
+    org.springframework.cache: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# ============================================
+# ACTUATOR - DEVELOPMENT (Full access)
+# ============================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # Tutti gli endpoint in dev
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    enable:
+      jvm: true
+      system: true
+      logback: true
+
+# ============================================
+# DEVELOPMENT HELPERS
+# ============================================
+# Hot reload abilitato (se usi spring-boot-devtools)
+# Cache disabilitata per vedere modifiche immediate
+

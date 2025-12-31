@@ -10,9 +10,9 @@
 	</parent>
 	<groupId>it.np</groupId>
 	<artifactId>n_agent</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0-BETA</version>
 	<name>n_agent</name>
-	<description>Custom agent for AI demo</description>
+	<description>AI-Powered Code Analysis GitHub App - BETA Version</description>
 	<url/>
 	<licenses>
 		<license/>

@@ -5,12 +5,17 @@
 [![Spring AI](https://img.shields.io/badge/Spring%20AI-1.1.2-blue.svg)](https://spring.io/projects/spring-ai)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7.0+-green.svg)](https://www.mongodb.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Beta](https://img.shields.io/badge/Status-BETA-orange.svg)](BETA_GUIDE.md)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](Dockerfile)
 
 **N_Agent** è una GitHub App intelligente che analizza automaticamente le Pull Request utilizzando modelli AI (GPT-4o-mini) per fornire feedback contestuale, identificare code smells e suggerire miglioramenti basati su regole personalizzabili.
+
+> 🎯 **BETA Program Active!** - [Unisciti al programma beta](BETA_GUIDE.md) per testare in anteprima le nuove funzionalità.
 
 ## 📋 Indice
 
 - [Caratteristiche Principali](#-caratteristiche-principali)
+- [🎯 Beta Testing Program](#-beta-testing-program)
 - [Architettura](#-architettura)
 - [Stack Tecnologico](#-stack-tecnologico)
 - [Prerequisiti](#-prerequisiti)
@@ -53,6 +58,73 @@
 - **Exponential Retry**: Resilience4j per gestione fallimenti MongoDB
 - **Timeout Configuration**: Protezione contro operazioni lente
 - **Error Handling Robusto**: Eccezioni custom con context logging
+
+---
+
+## 🎯 Beta Testing Program
+
+### Unisciti al Programma BETA!
+
+N_Agent è attualmente in **fase BETA** e cerchiamo beta testers per aiutarci a migliorare l'applicazione prima del rilascio pubblico.
+
+#### 📝 Come Partecipare
+
+1. **Leggi la [Guida Beta Testers](BETA_GUIDE.md)** completa
+2. **Compila il form**: [Beta Program Application](https://forms.gle/your-form-link) *(opzionale)*
+3. **Installa la GitHub App** sul tuo repository di test
+4. **Inizia a testare** e fornisci feedback!
+
+#### ✨ Benefici Beta Testers
+
+- ✅ **Free tier lifetime** quando l'app diventerà paid (se applicabile)
+- ✅ **Early access** a tutte le nuove feature
+- ✅ **Influenza diretta** sulla roadmap del prodotto
+- ✅ **Credito speciale** nel README come contributor
+- ✅ **Supporto prioritario** via email/Discord
+
+#### 🎁 Cosa Ricevi
+
+- Accesso completo all'app in ambiente beta
+- Documentazione dettagliata e supporto dedicato
+- Possibilità di richiedere feature personalizzate
+- Partecipazione a decisioni architetturali
+
+#### ⚠️ Cosa Aspettarsi
+
+**Funzionalità Operative**:
+- ✅ Analisi automatica PR
+- ✅ Commenti AI
+- ✅ Configurazione personalizzabile
+
+**Limitazioni BETA**:
+- ⚠️ Possibili downtime per manutenzione
+- ⚠️ Feature in evoluzione (breaking changes possibili)
+- ⚠️ Performance variabili durante testing
+
+#### 📚 Documentazione Beta
+
+- **[BETA_GUIDE.md](BETA_GUIDE.md)** - Guida completa per beta testers
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deploy rapido beta/produzione
+- **[CHANGELOG.md](CHANGELOG.md)** - Note di release e known issues
+
+#### 📊 Roadmap Beta → Stable
+
+```
+✅ BETA v0.1.0 (Attuale)
+   ├─ Core features operative
+   ├─ Testing con beta testers
+   └─ Raccolta feedback
+
+🔄 BETA v0.2.0 (Q1 2025)
+   ├─ Fix bug critici
+   ├─ Performance optimization
+   └─ Support per Claude AI
+
+🚀 STABLE v1.0.0 (Q2 2025)
+   ├─ Testing completo
+   ├─ Documentazione finale
+   └─ Public release
+```
 
 ---
 

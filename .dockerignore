@@ -1,0 +1,61 @@
+# ============================================
+# Docker Ignore File
+# ============================================
+# Files to exclude from Docker build context
+
+# Git
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Build artifacts
+target/
+!target/*.jar
+build/
+*.class
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.*
+
+# Documentation (not needed in image)
+README.md
+CONTRIBUTING.md
+CHANGELOG.md
+BETA_GUIDE.md
+DEPLOYMENT.md
+HELP.md
+
+# Scripts (not needed in image)
+deploy-railway.sh
+deploy-railway.ps1
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Test files
+src/test/
+
+# OS files
+.DS_Store
+Thumbs.db
+

@@ -14,10 +14,93 @@ e questo progetto aderisce a [Semantic Versioning](https://semver.org/spec/v2.0.
 - [ ] Support per Ollama (offline AI)
 - [ ] Dashboard web per configurazione
 - [ ] Metriche Prometheus/Grafana
-- [ ] Health check endpoints (Spring Actuator)
-- [ ] Docker Compose per stack completo
 - [ ] GitHub Actions CI/CD pipeline
 - [ ] Rate limiting per OpenAI API
+
+---
+
+## [0.1.0-BETA] - 2025-01-15
+
+### 🎉 BETA Release
+
+Prima release pubblica in versione BETA per testing con utenti selezionati.
+
+### Added ✨
+
+#### Deployment & DevOps
+- **Docker Support Completo**
+  - Multi-stage Dockerfile ottimizzato per produzione
+  - Docker Compose con profili (dev/beta/prod)
+  - Healthcheck integrato
+  - Non-root user per sicurezza
+  - JVM optimization per container
+
+- **Cloud Deployment Ready**
+  - Script automatico deploy Railway (Bash + PowerShell)
+  - Configurazione Procfile per Heroku/Railway
+  - railway.json con healthcheck e restart policy
+  - .dockerignore per build ottimizzati
+
+- **Spring Profiles**
+  - `application-beta.yaml` con logging DEBUG e metriche
+  - `application-prod.yaml` con logging minimale e security hardening
+  - Environment-specific configurations
+
+#### Documentation
+- **BETA_GUIDE.md** - Guida completa per beta testers
+  - Istruzioni installazione GitHub App
+  - Test scenarios e esempi pratici
+  - Configurazione avanzata via API REST
+  - FAQ e troubleshooting
+  - Template segnalazione bug
+
+- **DEPLOYMENT.md** - Quick deployment guide
+  - Railway deployment one-liner
+  - Docker Compose quick start
+  - Render deployment steps
+  - Verification checklist
+  - Troubleshooting comune
+
+- **README.md aggiornato**
+  - Badge BETA status
+  - Sezione Beta Testing Program
+  - Roadmap BETA → Stable
+  - Link documentazione beta
+
+#### Monitoring & Observability (BETA profile)
+- Spring Boot Actuator endpoints abilitati
+- Log file rotation (7 giorni, 10MB max)
+- Structured logging con timestamp
+- Metrics JVM e system
+
+### Changed 🔄
+- **Versione**: 0.0.1-SNAPSHOT → 0.1.0-BETA
+- **Description**: "Custom agent for AI demo" → "AI-Powered Code Analysis GitHub App - BETA Version"
+- **MongoDB database**: `code-agent` → `code-agent-beta` (profilo beta)
+- **Application name**: `n_agent` → `n_agent-beta` (profilo beta)
+
+### Security 🔒
+- Docker container eseguito come non-root user
+- Private key gestita via volume mount (non hardcoded in image)
+- Environment variables validate prima di deploy
+- HMAC signature validation sempre attiva
+- Stacktrace esposti solo in beta (prod: never)
+
+### Infrastructure ⚙️
+- **MongoDB**: Configurato con healthcheck e volume persistence
+- **Mongo Express**: Web UI per debugging (solo dev/beta)
+- **Networking**: Bridge network dedicato per servizi
+- **Volumes**: Separati per dev/beta/prod logs
+
+### Known Issues 🐛
+- ⚠️ Test coverage ancora sotto 10% (da implementare)
+- ⚠️ Nessun rate limiting su chiamate OpenAI
+- ⚠️ Webhook replay vulnerability (timestamp check mancante)
+- ⚠️ Cache non shared tra istanze scaled
+- ⚠️ Mancano health check per MongoDB in Actuator
+
+### Breaking Changes 💥
+Nessuno rispetto a 0.0.1-SNAPSHOT (prima release pubblica)
 
 ---
 
