@@ -1,0 +1,81 @@
+# ============================================
+# APPLICATION PROPERTIES - BETA PROFILE
+# ============================================
+# Profile: beta
+# Use: mvn spring-boot:run -Dspring-boot.run.profiles=beta
+# ============================================
+
+spring:
+  application:
+    name: n_agent-beta
+  webflux:
+    base-path: /code-agent
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/code-agent-beta}
+  ai:
+    openai:
+      api-key: ${OPEN_AI_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.2
+          max-tokens: 2000
+          frequency-penalty: 0.5
+          presence-penalty: 0.3
+      connection-timeout: 10s
+      read-timeout: 120s
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+    include-stacktrace: on_param  # Mostra stacktrace solo con ?trace=true
+
+webhook:
+  github:
+    secret: ${GITHUB_WEBHOOK_SECRET}
+
+github:
+  app:
+    id: ${GITHUB_APP_ID}
+    private-key-path: ${GITHUB_PRIVATE_KEY_PATH}
+  api:
+    base-url: https://api.github.com
+    installation-token-url: https://api.github.com/app/installations/{installation_id}/access_tokens
+
+# ============================================
+# LOGGING CONFIGURATION - BETA
+# ============================================
+logging:
+  level:
+    root: INFO
+    it.np.n_agent: DEBUG
+    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG
+    org.springframework.data.mongodb.core: INFO
+    org.springframework.web.reactive: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/n-agent-beta.log
+    max-size: 10MB
+    max-history: 7
+
+# ============================================
+# ACTUATOR - BETA (Metrics enabled)
+# ============================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    enable:
+      jvm: true
+      system: true
+

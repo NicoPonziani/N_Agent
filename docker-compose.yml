@@ -1,0 +1,177 @@
+# ============================================
+# Docker Compose - N_Agent Stack
+# ============================================
+# Usage:
+#   Development: docker-compose up
+#   Beta: docker-compose --profile beta up
+#   Production: docker-compose --profile prod up -d
+# ============================================
+
+version: '3.8'
+
+services:
+  # ============================================
+  # MongoDB Service
+  # ============================================
+  mongodb:
+    image: mongo:7.0
+    container_name: n-agent-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: code-agent
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - n-agent-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ============================================
+  # N_Agent Application - Development
+  # ============================================
+  n-agent-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: n-agent-dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      MONGODB_URI: mongodb://mongodb:27017/code-agent
+      OPEN_AI_KEY: ${OPEN_AI_KEY}
+      GITHUB_APP_ID: ${GITHUB_APP_ID}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
+      GITHUB_PRIVATE_KEY_PATH: /app/keys/private-key.pem
+    volumes:
+      - ./code-analisys-agent.2025-12-17.private-key.pem:/app/keys/private-key.pem:ro
+      - app_logs:/app/logs
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - n-agent-network
+    profiles:
+      - dev
+
+  # ============================================
+  # N_Agent Application - Beta
+  # ============================================
+  n-agent-beta:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: n-agent-beta
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: beta
+      MONGODB_URI: mongodb://mongodb:27017/code-agent-beta
+      OPEN_AI_KEY: ${OPEN_AI_KEY}
+      GITHUB_APP_ID: ${GITHUB_APP_ID}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
+      GITHUB_PRIVATE_KEY_PATH: /app/keys/private-key.pem
+      SERVER_PORT: 8080
+    volumes:
+      - ./code-analisys-agent.2025-12-17.private-key.pem:/app/keys/private-key.pem:ro
+      - app_logs_beta:/app/logs
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - n-agent-network
+    profiles:
+      - beta
+    labels:
+      - "com.n-agent.environment=beta"
+      - "com.n-agent.version=0.1.0-beta"
+
+  # ============================================
+  # N_Agent Application - Production
+  # ============================================
+  n-agent-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: n-agent-prod
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      MONGODB_URI: ${MONGODB_URI}
+      OPEN_AI_KEY: ${OPEN_AI_KEY}
+      GITHUB_APP_ID: ${GITHUB_APP_ID}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
+      GITHUB_PRIVATE_KEY_PATH: /app/keys/private-key.pem
+      SERVER_PORT: 8080
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+      AI_TEMPERATURE: ${AI_TEMPERATURE:-0.2}
+      AI_MAX_TOKENS: ${AI_MAX_TOKENS:-2000}
+    volumes:
+      - ./code-analisys-agent.2025-12-17.private-key.pem:/app/keys/private-key.pem:ro
+      - app_logs_prod:/app/logs
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - n-agent-network
+    profiles:
+      - prod
+    labels:
+      - "com.n-agent.environment=production"
+      - "com.n-agent.version=1.0.0"
+
+  # ============================================
+  # Mongo Express (Optional - only for dev/beta)
+  # ============================================
+  mongo-express:
+    image: mongo-express:latest
+    container_name: n-agent-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-admin123}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - n-agent-network
+    profiles:
+      - dev
+      - beta
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  app_logs:
+    driver: local
+  app_logs_beta:
+    driver: local
+  app_logs_prod:
+    driver: local
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  n-agent-network:
+    driver: bridge
+

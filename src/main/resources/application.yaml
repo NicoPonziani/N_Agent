@@ -1,3 +1,54 @@
+# ============================================
+# APPLICATION PROPERTIES - BASE CONFIGURATION
+# ============================================
+# This file contains base configuration.
+# Environment-specific settings are in:
+#   - application-dev.yaml (local development)
+#   - application-beta.yaml (beta environment)
+#   - application-prod.yaml (production)
+#
+# Active profile is set via:
+#   SPRING_PROFILES_ACTIVE environment variable
+#   or --spring.profiles.active=<profile> argument
+# ============================================
+
 spring:
   application:
     name: n_agent
+  webflux:
+    base-path: /code-agent
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/code-agent
+  ai:
+    openai:
+      api-key: ${OPEN_AI_KEY}
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.2
+          base-url: https://api.openai.com/v1
+          max-tokens: 2000
+          frequency-penalty: 0.5
+          presence-penalty: 0.3
+      connection-timeout: 10s
+      read-timeout: 120s
+server:
+  port: 8080
+
+webhook:
+  github:
+    secret: ${GITHUB_WEBHOOK_SECRET}
+
+github:
+  app:
+    id: ${GITHUB_APP_ID}
+    private-key-path: ${GITHUB_PRIVATE_KEY_PATH}
+  api:
+    base-url: https://api.github.com
+    installation-token-url: https://api.github.com/app/installations/{installation_id}/access_tokens
+
+#logging:
+#  level:
+#    it.np.n_agent: DEBUG
+#    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG

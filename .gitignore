@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### ENVIRONMENT & SECRETS ###
+.env
+.env.local
+.env.production
+*.pem
+*.key
+/code-analisys-agent.2025-12-17.private-key.pem
+
+### GITHUB WORKFLOWS (optional - uncomment if needed) ###
+.github/*
