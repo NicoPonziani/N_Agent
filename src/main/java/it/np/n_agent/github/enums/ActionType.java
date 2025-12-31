@@ -5,13 +5,15 @@ import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.TriggerSettin
 
 
 public enum ActionType {
+    ADDED,
     OPENED,
     REOPENED,
     SYNCHRONIZE,
     CLOSED,
     EDITED,
     DELETED,
-    CREATED;
+    CREATED,
+    REMOVED;
 
     public static ActionType fromValue(String value) {
         for (ActionType actionType : ActionType.values()) {

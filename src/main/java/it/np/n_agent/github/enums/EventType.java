@@ -1,15 +1,19 @@
 package it.np.n_agent.github.enums;
 
+import it.np.n_agent.exception.WebhookMainException;
 import it.np.n_agent.github.dto.GHWebhookInstallationPaylaod;
+import it.np.n_agent.github.dto.GHWebhookInstallationRepoPayload;
 import it.np.n_agent.github.dto.GHWebhookPrPayload;
 import it.np.n_agent.utilities.RequestUtility;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
 @Getter
 public enum EventType {
     PUSH("push"),
     PULL_REQUEST("pull_request", GHWebhookPrPayload.class),
     INSTALLATION("installation", GHWebhookInstallationPaylaod.class),
+    INSTALLATION_REPOSITORIES("installation_repositories", GHWebhookInstallationRepoPayload.class),
     OTHER("other");
 
     private final String eventValue;
@@ -38,7 +42,7 @@ public enum EventType {
         if(type.getPayloadClass() != null){
             return requestUtility.parsePayload(payload, type.getPayloadClass());
         }
-        return null;
+        throw new WebhookMainException(String.format("Unsupported event type for payload parsing: %s",eventType), HttpStatus.BAD_REQUEST);
     }
 }
 

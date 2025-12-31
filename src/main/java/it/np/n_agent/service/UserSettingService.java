@@ -3,11 +3,11 @@ package it.np.n_agent.service;
 import io.github.resilience4j.reactor.retry.RetryOperator;
 import io.github.resilience4j.retry.Retry;
 import it.np.n_agent.dto.UserSettingDto;
-import it.np.n_agent.entity.GlobalSettings;
-import it.np.n_agent.entity.UserSetting;
+import it.np.n_agent.entity.*;
 import it.np.n_agent.exception.MongoDbException;
 import it.np.n_agent.exception.WebhookMainException;
 import it.np.n_agent.github.dto.GHWebhookInstallationPaylaod;
+import it.np.n_agent.github.dto.GHWebhookInstallationRepoPayload;
 import it.np.n_agent.mapper.UserSettingMapper;
 import it.np.n_agent.repository.UserSettingRepository;
 import org.slf4j.Logger;
@@ -18,9 +18,13 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SynchronousSink;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
 
 import static it.np.n_agent.utilities.UserSettingUtility.buildAccountInfo;
 import static it.np.n_agent.utilities.UserSettingUtility.buildDefaultRepositories;
@@ -78,6 +82,64 @@ public class UserSettingService {
     }
 
     /**
+     * Removes repositories from user settings based on installation ID and list of repositories.
+     * Called when receiving INSTALLATION_REPOSITORIES event with REMOVED action.
+     * Applies automatic retry (max 3 attempts) and 3-second timeout.
+     *
+     * @param installationId GitHub App installation ID
+     * @param repositories List of repositories to remove
+     * @return Mono emitting true if removal succeeds
+     * @throws MongoDbException if operation fails after all retries
+     */
+    @CacheEvict(value = "userSettings", key = "#installationId")
+    public Mono<Boolean> removedRepository(Long installationId, List<GHWebhookInstallationRepoPayload.Repository> repositories){
+        log.info("Removing repository {} from user settings for installation ID: {}", repositories, installationId);
+        return userSettingRepository.findByGithubInstallationId(installationId)
+                .timeout(Duration.ofSeconds(3))
+                .transformDeferred(RetryOperator.of(mongoRetry))
+                .switchIfEmpty(Mono.error(new WebhookMainException(
+                        String.format("User settings not found for installationId: %s", installationId),
+                        HttpStatus.NOT_FOUND))
+                )
+                .handle(sinkRemovedTriggers(repositories))
+                .flatMap(this::saveUserSettings)
+                .defaultIfEmpty(false)
+                .onErrorMap(error -> new MongoDbException(
+                    String.format("Failed to remove repository from user settings for installation ID: %s", installationId),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    error));
+    }
+
+    /**
+     * Adds repositories to user settings based on installation ID and list of repositories.
+     * Called when receiving INSTALLATION_REPOSITORIES event with ADDED action.
+     * Applies automatic retry (max 3 attempts) and 3-second timeout.
+     *
+     * @param installationId GitHub App installation ID
+     * @param repositories List of repositories to add
+     * @return Mono emitting true if addition succeeds
+     * @throws MongoDbException if operation fails after all retries
+     */
+    @CacheEvict(value = "userSettings", key = "#installationId")
+    public Mono<Boolean> addedRepository(Long installationId, List<GHWebhookInstallationRepoPayload.Repository> repositories) {
+        log.info("Adding repository {} to user settings for installation ID: {}", repositories, installationId);
+        return userSettingRepository.findByGithubInstallationId(installationId)
+                .timeout(Duration.ofSeconds(3))
+                .transformDeferred(RetryOperator.of(mongoRetry))
+                .switchIfEmpty(Mono.error(new WebhookMainException(
+                        String.format("User settings not found for installationId: %s", installationId),
+                        HttpStatus.NOT_FOUND))
+                )
+                .handle(sinkAddedTriggers(repositories))
+                .flatMap(this::saveUserSettings)
+                .defaultIfEmpty(false)
+                .onErrorMap(error -> new MongoDbException(
+                    String.format("Failed to add repository to user settings for installation ID: %s", installationId),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    error));
+    }
+
+    /**
      * Saves user settings to MongoDB with automatic retry and timeout.
      * Applies exponential retry configuration (max 3 attempts) and 5-second timeout.
      *
@@ -108,6 +170,7 @@ public class UserSettingService {
      * @return Mono emitting true if deletion succeeds (even if no document found)
      * @throws MongoDbException if deletion fails after all retries
      */
+    @CacheEvict(value = "userSettings", key = "#installationId")
     public Mono<Boolean> deleteUserSettings(Long installationId, Long userId) {
         log.info("Deleting user settings for installation ID: {} and userId: {}", installationId, userId);
         return userSettingRepository.deleteByInstallationIdAndUserId(installationId,userId)
@@ -183,6 +246,10 @@ public class UserSettingService {
         return userSettingRepository.findByGithubInstallationId(installationId)
                 .timeout(Duration.ofSeconds(3))
                 .transformDeferred(RetryOperator.of(mongoRetry))
+                .switchIfEmpty(Mono.error(new WebhookMainException(
+                    String.format("User settings not found for installationId: %s", installationId),
+                    HttpStatus.NOT_FOUND))
+                )
                 .map(userSettingMapper::settingToDto)
                 .doOnNext(settings -> log.info("User settings retrieved successfully for installationId: {}", installationId))
                 .doOnSuccess(settings -> {
@@ -195,6 +262,59 @@ public class UserSettingService {
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     error)
                 );
+    }
+
+    private static BiConsumer<UserSetting, SynchronousSink<UserSetting>> sinkRemovedTriggers(List<GHWebhookInstallationRepoPayload.Repository> repositories) {
+        List<Long> repoIdsToRemove = repositories.stream()
+                .map(GHWebhookInstallationRepoPayload.Repository::getId)
+                .toList();
+        return (userSetting,sink) -> {
+            List<RepositoryConfig> repos = new ArrayList<>(userSetting.getRepositories());
+            boolean removed = repos.removeIf(repo -> repoIdsToRemove.contains(repo.getRepoId()));
+            if (removed) {
+                userSetting.setRepositories(repos);
+                userSetting.setUpdatedAt(LocalDateTime.now());
+                sink.next(userSetting);
+                return;
+            }
+            log.info("No repositories removed - IDs {} not found for installation {}",
+                     repoIdsToRemove, userSetting.getGithubInstallationId());
+            sink.complete();
+        };
+    }
+
+    private static BiConsumer<UserSetting, SynchronousSink<UserSetting>> sinkAddedTriggers(List<GHWebhookInstallationRepoPayload.Repository> repositories) {
+        return (userSetting,sink) -> {
+            List<Long> existingRepoIds = userSetting.getRepositories().stream()
+                    .map(RepositoryConfig::getRepoId)
+                    .toList();
+
+            List<RepositoryConfig> newRepos = repositories.stream()
+                    .filter(repo -> !existingRepoIds.contains(repo.getId()))
+                    .map(repo -> RepositoryConfig.builder()
+                            .repoId(repo.getId())
+                            .repoName(repo.getName())
+                            .rules(AnalysisRules.defaults())
+                            .triggers(TriggerSettings.builder().build())
+                            .isActive(true)
+                            .metadata(RepositoryMetadata.builder().build())
+                            .notifications(NotificationSettings.builder().build())
+                            .build())
+                    .toList();
+
+            if(!newRepos.isEmpty()){
+                List<RepositoryConfig> updatedRepos = new ArrayList<>(newRepos);
+                updatedRepos.addAll(userSetting.getRepositories());
+                userSetting.setRepositories(updatedRepos);
+                userSetting.setUpdatedAt(LocalDateTime.now());
+                sink.next(userSetting);
+                return;
+            }
+            log.info("No new repositories to add - all IDs {} already exist for installation {}",
+                     repositories.stream().map(GHWebhookInstallationRepoPayload.Repository::getId).toList(),
+                     userSetting.getGithubInstallationId());
+            sink.complete();
+        };
     }
 
     private Mono<UserSetting> mergeSettings(UserSetting incoming, UserSetting existing) {
