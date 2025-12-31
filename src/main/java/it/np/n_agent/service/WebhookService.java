@@ -4,6 +4,7 @@ import it.np.n_agent.ai.dto.CodeAnalysisResult;
 import it.np.n_agent.dto.UserSettingDto;
 import it.np.n_agent.exception.WebhookMainException;
 import it.np.n_agent.github.dto.GHWebhookInstallationPaylaod;
+import it.np.n_agent.github.dto.GHWebhookInstallationRepoPayload;
 import it.np.n_agent.github.dto.GHWebhookPrPayload;
 import it.np.n_agent.github.enums.ActionType;
 import it.np.n_agent.github.enums.EventType;
@@ -55,8 +56,20 @@ public class WebhookService {
             case PUSH -> handlePushEvent((GHWebhookPrPayload) payload);
             case PULL_REQUEST -> handlePullRequestEvent((GHWebhookPrPayload) payload);
             case INSTALLATION -> handleInstallationEvent((GHWebhookInstallationPaylaod) payload);
+            case INSTALLATION_REPOSITORIES -> handleNewReposInstallationEvent((GHWebhookInstallationRepoPayload) payload);
             default -> Mono.error(new WebhookMainException("Unsupported event type", HttpStatus.BAD_REQUEST));
         };
+    }
+
+    private Mono<Boolean> handleNewReposInstallationEvent(GHWebhookInstallationRepoPayload payload) {
+        log.info("Processing Installation Repositories event for installation ID {} action {}", payload.getInstallation().getId(),payload.getAction());
+        if(ActionType.REMOVED.name().equalsIgnoreCase(payload.getAction())){
+            return userSettingService.removedRepository(payload.getInstallation().getId(), payload.getRepositoriesRemoved());
+        } else if (ActionType.ADDED.name().equalsIgnoreCase(payload.getAction())){
+            return userSettingService.addedRepository(payload.getInstallation().getId(), payload.getRepositoriesAdded());
+        }
+        log.info("No action taken for installation repositories event with action: {}", payload.getAction());
+        return Mono.just(true);
     }
 
     /**

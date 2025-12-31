@@ -18,9 +18,9 @@ public class GlobalSettings {
 
     @Builder.Default
     @Field("language")
-    private String language = "en";
+    private String language = "EN";
 
     @Builder.Default
     @Field("timezone")
-    private String timezone = "UTC";
+    private String timezone = "Europe/London";
 }
