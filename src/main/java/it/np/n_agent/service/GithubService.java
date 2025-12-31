@@ -31,6 +31,16 @@ public class GithubService {
         this.authService = authService;
     }
 
+    /**
+     * Retrieves Git diff content from GitHub API for a pull request.
+     * Obtains installation token, fetches diff using GitHub API v3 format, applies retry logic.
+     * Uses 30-second timeout and retries up to 2 times on failure.
+     *
+     * @param apiPath GitHub API URL for the pull request
+     * @param installationId GitHub App installation ID for authentication
+     * @return Mono emitting diff content as String
+     * @throws GitHubApiException if API call fails after retries or auth fails
+     */
     public Mono<String> retrieveDiff(String apiPath, Long installationId) {
         log.info("Fetching diff from: {}", apiPath);
         return authService.getInstallationToken(installationId)

@@ -9,6 +9,12 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/test")
 public class TestController {
 
+    /**
+     * Simple health check endpoint to verify application is running.
+     * Used for monitoring and deployment verification.
+     *
+     * @return Mono emitting health status message
+     */
     @GetMapping("/health")
     public Mono<String> health() {
         return Mono.just("OK - Code Regret Predictor Agent is running");

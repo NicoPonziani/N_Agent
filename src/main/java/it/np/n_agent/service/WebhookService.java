@@ -41,6 +41,15 @@ public class WebhookService {
         this.userSettingService = userSettingService;
     }
 
+    /**
+     * Main entry point for processing GitHub webhook events.
+     * Routes the event to the appropriate handler based on event type.
+     *
+     * @param payload webhook payload object (can be GHWebhookPrPayload or GHWebhookInstallationPayload)
+     * @param eventType type of GitHub event (PUSH, PULL_REQUEST, INSTALLATION)
+     * @return Mono emitting true if processing succeeds, false otherwise
+     * @throws WebhookMainException if the event type is not supported
+     */
     public Mono<Boolean> processGithubWebhook(Object payload, String eventType) {
         return switch (EventType.fromValue(eventType)) {
             case PUSH -> handlePushEvent((GHWebhookPrPayload) payload);
@@ -50,6 +59,14 @@ public class WebhookService {
         };
     }
 
+    /**
+     * Handles GitHub App INSTALLATION events (created/deleted).
+     * - CREATED action: builds and saves default user settings
+     * - DELETED action: removes user settings from database
+     *
+     * @param payload GitHub installation webhook payload containing installation details
+     * @return Mono emitting true if the operation succeeds
+     */
     private Mono<Boolean> handleInstallationEvent(GHWebhookInstallationPaylaod payload) {
         log.info("Processing Installation event for installation ID {} action {}", payload.getInstallation().getId(),payload.getAction());
         if(ActionType.CREATED.name().equalsIgnoreCase(payload.getAction()))
@@ -62,6 +79,21 @@ public class WebhookService {
         return Mono.just(true);
     }
 
+    /**
+     * Handles GitHub PULL_REQUEST events (opened/updated/reopened).
+     * Orchestrates the complete analysis workflow:
+     * 1. Retrieves user settings and checks if repository triggers are active
+     * 2. Fetches PR diff from GitHub API
+     * 3. Sends diff to AI service for analysis
+     * 4. Handles AI response (stores results, posts comments)
+     * 5. Sends notifications based on user preferences
+     *
+     * Uses reactive chain with bounded elastic scheduler for potentially blocking operations.
+     * Returns empty (false) if repository is inactive or triggers don't match.
+     *
+     * @param payload GitHub PR webhook payload containing PR details and metadata
+     * @return Mono emitting true if analysis completes successfully, false if skipped
+     */
     private Mono<Boolean> handlePullRequestEvent(GHWebhookPrPayload payload) {
         log.info("Processing Pull Request event for PR #{}", payload.getPullRequest().getNumber());
 
@@ -100,11 +132,32 @@ public class WebhookService {
     }
 
 
+    /**
+     * Handles GitHub PUSH events.
+     * Currently not implemented - returns false.
+     *
+     * @param payload GitHub push webhook payload
+     * @return Mono emitting false (not implemented)
+     */
     private Mono<Boolean> handlePushEvent(GHWebhookPrPayload payload) {
         log.info("Push event not implemented yet");
         return Mono.just(false);
     }
 
+    /**
+     * Creates a BiConsumer for filtering user settings based on repository triggers.
+     * Used in reactive .handle() operator to conditionally emit settings.
+     *
+     * Emits the setting downstream only if:
+     * - Repository is found in user settings
+     * - Repository is active (isActive = true)
+     * - Action trigger matches the PR action (onPROpen, onPRUpdate, etc.)
+     *
+     * If conditions are not met, completes the sink without emitting to prevent reactive chain hang.
+     *
+     * @param payload GitHub PR webhook payload to extract repository name and action
+     * @return BiConsumer that emits setting if triggers match, completes otherwise
+     */
     private static BiConsumer<UserSettingDto, SynchronousSink<UserSettingDto>> sinkActionTriggers(GHWebhookPrPayload payload) {
         return (setting, sink) -> {
             String repo = payload.getRepository().getName();
@@ -114,13 +167,27 @@ public class WebhookService {
                             .findFirst();
             if (repoConfigOpt.isPresent() && repoConfigOpt.get().getIsActive()) {
                 TriggerSettingsDto conf = repoConfigOpt.get().getTriggers();
-                if (ActionType.isValidActionPR(conf, payload.getAction()))
+                if (ActionType.isValidActionPR(conf, payload.getAction())) {
                     sink.next(setting);
+                    return;
+                }
             }
             log.info("Repository {} is inactive for action {}. Skipping analysis.", repo, payload.getAction());
+            sink.complete();
         };
     }
 
+    /**
+     * Builds a WebhookZipInput record combining all data needed for analysis workflow.
+     * Extracts repository-specific configuration (rules, notifications) from user settings.
+     * If repository is not found in settings, creates a default empty configuration.
+     *
+     * @param diff Git diff content retrieved from GitHub API
+     * @param setting User settings containing repository configurations
+     * @param repoName Repository name to extract configuration for
+     * @param baseInfo Base webhook information (installationId, PR number, etc.)
+     * @return WebhookZipInput record with all data for downstream processing
+     */
     public static WebhookZipInput buildWebhookZipInput(String diff, UserSettingDto setting, String repoName, WebhookBaseInfo baseInfo){
         RepositoryConfigDto repoConfig =
                 setting.getRepositories().stream()
@@ -169,6 +236,17 @@ public class WebhookService {
         }
     }
 
+    /**
+     * Immutable record holding base webhook metadata extracted from GitHub payload.
+     * Contains essential information needed for GitHub API calls and notifications.
+     *
+     * @param installationId GitHub App installation ID for authentication
+     * @param commitSha Git commit SHA of the PR head
+     * @param url GitHub API URL for the pull request
+     * @param prNumber Pull request number
+     * @param owner Repository owner (user or organization login)
+     * @param repo Repository name
+     */
     @Builder
     public record WebhookBaseInfo(Long installationId,
                                   String commitSha,

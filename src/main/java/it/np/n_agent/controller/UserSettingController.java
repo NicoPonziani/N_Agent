@@ -30,6 +30,14 @@ public class UserSettingController {
         this.userSettingService = userSettingService;
     }
 
+    /**
+     * Retrieves user settings for a specific GitHub user ID.
+     * Returns 200 OK with settings if found, 404 Not Found if user has no settings.
+     * Result is cached by service layer for 50 minutes.
+     *
+     * @param userId GitHub user ID
+     * @return Mono emitting ResponseEntity with UserSettingDto or 404 status
+     */
     @GetMapping("/{user-id}")
     public Mono<ResponseEntity<UserSettingDto>> getUserSettings(@PathVariable(name = "user-id") @Valid @NotBlank Long userId) {
         log.info("Retrieving user settings for userId: {}", userId);
@@ -44,6 +52,15 @@ public class UserSettingController {
                 });
     }
 
+    /**
+     * Saves or updates user settings for a GitHub user.
+     * Validates input DTO, merges with existing settings if present, invalidates cache.
+     * Returns 200 OK on success.
+     *
+     * @param settings UserSettingDto with updated configuration
+     * @return Mono emitting ResponseEntity with success message
+     * @throws it.np.n_agent.exception.MongoDbException if save operation fails
+     */
     @PostMapping("/save")
     public Mono<ResponseEntity<String>> saveUserSettings(@RequestBody @Valid UserSettingDto settings) {
         log.info("Received user settings for userId: {}", settings.getUserId());

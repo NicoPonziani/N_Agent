@@ -50,7 +50,12 @@ public class GitHubAuthService {
     }
 
     /**
-     * Genera JWT per autenticare come GitHub App
+     * Generates JWT token to authenticate as GitHub App.
+     * JWT is valid for 10 minutes and signed with the GitHub App private key.
+     * Used to authenticate GitHub App API requests and obtain installation tokens.
+     *
+     * @return JWT token string
+     * @throws RuntimeException if JWT generation fails (private key loading or signing error)
      */
     public String generateJWT() {
         try {
@@ -71,10 +76,13 @@ public class GitHubAuthService {
     }
 
     /**
-     * Ottiene Installation Access Token per accedere ai repository
+     * Obtains GitHub App Installation Access Token to access repositories.
+     * Token is cached for 50 minutes (expires after 60 minutes from GitHub).
+     * Uses JWT authentication to request installation-specific token from GitHub API.
      *
-     * @param installationId ID dell'installazione (dal webhook payload)
-     * @return Mono con l'access token
+     * @param installationId GitHub App installation ID (from webhook payload)
+     * @return Mono emitting installation access token
+     * @throws GitHubApiException if token request fails
      */
     @Cacheable(value = "githubInstallationTokens", key = "#installationId")
     public Mono<String> getInstallationToken(Long installationId) {
@@ -103,6 +111,14 @@ public class GitHubAuthService {
                 .cache(Duration.ofMinutes(50)); // Cache per 50 min (scade dopo 60)
     }
 
+    /**
+     * Loads GitHub App private key from configured path (filesystem or classpath).
+     * Supports both PKCS#1 (RSA) and PKCS#8 formats.
+     * Uses BouncyCastle PEM parser to handle PEM encoded keys.
+     *
+     * @return PrivateKey instance for JWT signing
+     * @throws IOException if key file not found, not readable, or format unsupported
+     */
     private PrivateKey loadPrivateKey() throws IOException {
         log.info("Loading private key from configured path");
 

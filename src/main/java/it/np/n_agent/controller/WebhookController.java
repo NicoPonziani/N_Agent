@@ -26,6 +26,17 @@ public class WebhookController {
         this.requestUtility = requestUtility;
     }
 
+    /**
+     * GitHub webhook endpoint for receiving events (PUSH, PULL_REQUEST, INSTALLATION).
+     * Validates HMAC signature, parses payload based on event type, and processes asynchronously.
+     * Runs validation on bounded elastic scheduler to avoid blocking reactive threads.
+     *
+     * @param rawPayload Raw JSON webhook payload from GitHub
+     * @param eventType GitHub event type header (X-GitHub-Event)
+     * @param signature HMAC SHA-256 signature for payload validation (X-Hub-Signature-256)
+     * @return Mono emitting ResponseEntity with success message if processing succeeds
+     * @throws it.np.n_agent.exception.WebhookMainException if HMAC validation fails or event type unsupported
+     */
     @PostMapping("/github")
     public Mono<ResponseEntity<String>> handleWebhook(
             @RequestBody String rawPayload,
