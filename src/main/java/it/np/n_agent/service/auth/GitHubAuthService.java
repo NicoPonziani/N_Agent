@@ -3,6 +3,7 @@ package it.np.n_agent.service.auth;
 import io.jsonwebtoken.Jwts;
 import it.np.n_agent.exception.GitHubApiException;
 import it.np.n_agent.exception.WebhookMainException;
+import it.np.n_agent.github.config.GitHubConfig;
 import it.np.n_agent.github.enums.HeaderGithubUtility;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.openssl.PEMKeyPair;
@@ -37,21 +38,15 @@ public class GitHubAuthService {
 
     private static final Logger log = LoggerFactory.getLogger(GitHubAuthService.class);
 
-    private final String APP_ID;
-    private final String PRIVATE_KEY_PATH;
+    private final GitHubConfig gitHubConfig;
     private final WebClient GITHUB_WEB_CLIENT;
-    private final String GITHUB_INSTALLATION_TOKEN_API;
 
     @Autowired
     public GitHubAuthService(
-            @Value("${github.app.id}") String appId,
-            @Value("${github.app.private-key-path}") String privateKeyPath,
-            @Value("${github.api.installation-token-url}") String githubInstallationTokenApi,
+            GitHubConfig gitHubConfig,
             @Qualifier("githubWebClient") WebClient githubWebClient) {
-        this.APP_ID = appId;
-        this.PRIVATE_KEY_PATH = privateKeyPath;
+        this.gitHubConfig = gitHubConfig;
         this.GITHUB_WEB_CLIENT = githubWebClient;
-        this.GITHUB_INSTALLATION_TOKEN_API = githubInstallationTokenApi;
     }
 
     /**
@@ -64,7 +59,7 @@ public class GitHubAuthService {
             Instant expiration = now.plusSeconds(600); // 10 minutes
 
             return Jwts.builder()
-                    .setIssuer(APP_ID)
+                    .setIssuer(gitHubConfig.getApp().getId())
                     .setIssuedAt(Date.from(now))
                     .setExpiration(Date.from(expiration))
                     .signWith(privateKey)
@@ -89,7 +84,7 @@ public class GitHubAuthService {
 
         return GITHUB_WEB_CLIENT
                 .post()
-                .uri(GITHUB_INSTALLATION_TOKEN_API, installationId)
+                .uri(gitHubConfig.getApi().getInstallationTokenUrl(), installationId)
                 .header("Authorization", "Bearer " + jwt)
                 .header("Accept", HeaderGithubUtility.APPLICATION_VND_V3_JSON.getHeaderValue())
                 .retrieve()
@@ -112,9 +107,9 @@ public class GitHubAuthService {
         log.info("Loading private key from configured path");
 
         String keyContent;
-
-        if (PRIVATE_KEY_PATH.startsWith("classpath:")) {
-            String resourcePath = PRIVATE_KEY_PATH.replace("classpath:", "");
+        final String privateKeyPath = gitHubConfig.getApp().getPrivateKeyPath();
+        if (privateKeyPath.startsWith("classpath:")) {
+            String resourcePath = privateKeyPath.replace("classpath:", "");
             try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
 
                 if (inputStream == null) {
@@ -125,7 +120,7 @@ public class GitHubAuthService {
             }
 
         } else {
-            keyContent = Files.readString(Paths.get(PRIVATE_KEY_PATH), StandardCharsets.UTF_8);
+            keyContent = Files.readString(Paths.get(privateKeyPath), StandardCharsets.UTF_8);
         }
 
         try (PEMParser pemParser = new PEMParser(new StringReader(keyContent))) {
