@@ -148,13 +148,17 @@ public class UserSettingService {
             settingEntity.setUpdatedAt(now);
             return Mono.just(settingEntity);
         })
-        .zipWhen(userSetting -> userSettingRepository.findByUserId(userSetting.getUserId())
+        .zipWhen(userSetting ->
+                userSettingRepository.findByUserId(userSetting.getUserId())
                 .timeout(Duration.ofSeconds(3))
-                .transformDeferred(RetryOperator.of(mongoRetry)))
+                .transformDeferred(RetryOperator.of(mongoRetry))
+        )
         .flatMap(tuple -> mergeSettings(tuple.getT1(),tuple.getT2()))
-        .flatMap(userSetting -> userSettingRepository.save(userSetting)
+        .flatMap(userSetting ->
+                userSettingRepository.save(userSetting)
                 .timeout(Duration.ofSeconds(5))
-                .transformDeferred(RetryOperator.of(mongoRetry)))
+                .transformDeferred(RetryOperator.of(mongoRetry))
+        )
         .doOnSuccess(saved -> log.info("User settings saved successfully for userId: {}", settings.getUserId()))
         .onErrorMap(error -> new MongoDbException(
             String.format("Failed to save user settings for userId: %s", settings.getUserId()),
