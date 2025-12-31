@@ -16,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 public class UserSettingDto {
 
-    @NotBlank(message = "userId cannot be blank")
+    @NotNull(message = "userId cannot be null")
     private Long userId;
     @NotNull(message = "githubInstallationId cannot be null")
     private Long githubInstallationId;
@@ -47,10 +47,19 @@ public class UserSettingDto {
 
         @NotBlank(message = "repoId cannot be blank")
         private String repoId;
+
+        @NotBlank(message = "repoName cannot be blank")
         private String repoName;
+
         private Boolean isActive;
+
+        @Valid
         private AnalysisRulesDto rules;
+
+        @Valid
         private TriggerSettingsDto triggers;
+
+        @Valid
         private NotificationSettingsDto notifications;
 
         @Data
