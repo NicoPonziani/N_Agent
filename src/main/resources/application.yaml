@@ -1,3 +1,17 @@
+# ============================================
+# APPLICATION PROPERTIES - BASE CONFIGURATION
+# ============================================
+# This file contains base configuration.
+# Environment-specific settings are in:
+#   - application-dev.yaml (local development)
+#   - application-beta.yaml (beta environment)
+#   - application-prod.yaml (production)
+#
+# Active profile is set via:
+#   SPRING_PROFILES_ACTIVE environment variable
+#   or --spring.profiles.active=<profile> argument
+# ============================================
+
 spring:
   application:
     name: n_agent
