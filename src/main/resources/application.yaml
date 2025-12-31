@@ -34,7 +34,7 @@ github:
     base-url: https://api.github.com
     installation-token-url: https://api.github.com/app/installations/{installation_id}/access_tokens
 
-logging:
-  level:
-    it.np.n_agent: DEBUG
-    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG
+#logging:
+#  level:
+#    it.np.n_agent: DEBUG
+#    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG

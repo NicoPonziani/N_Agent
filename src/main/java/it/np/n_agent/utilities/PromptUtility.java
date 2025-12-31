@@ -14,7 +14,7 @@ public class PromptUtility {
         String basePrompt = ResourceUtility.loadPromptAsString(promptPath);
 
         return String.format(basePrompt,
-                rules.getLanguages(),
+                rules.getLanguages() == null || rules.getLanguages().isEmpty() ? "all programming languages" : String.join(", ", rules.getLanguages()),
                 rules.getNullPointerPrediction(),
                 rules.getDebtEstimation(),
                 rules.getDetectTODOs(),
