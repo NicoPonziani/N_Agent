@@ -22,6 +22,7 @@ import reactor.core.publisher.SynchronousSink;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -96,6 +97,10 @@ public class UserSettingService {
         return userSettingRepository.findByGithubInstallationId(installationId)
                 .timeout(Duration.ofSeconds(3))
                 .transformDeferred(RetryOperator.of(mongoRetry))
+                .switchIfEmpty(Mono.error(new WebhookMainException(
+                        String.format("User settings not found for installationId: %s", installationId),
+                        HttpStatus.NOT_FOUND))
+                )
                 .handle(sinkRemovedTriggers(repositories))
                 .flatMap(this::saveUserSettings)
                 .defaultIfEmpty(false)
@@ -121,6 +126,10 @@ public class UserSettingService {
         return userSettingRepository.findByGithubInstallationId(installationId)
                 .timeout(Duration.ofSeconds(3))
                 .transformDeferred(RetryOperator.of(mongoRetry))
+                .switchIfEmpty(Mono.error(new WebhookMainException(
+                        String.format("User settings not found for installationId: %s", installationId),
+                        HttpStatus.NOT_FOUND))
+                )
                 .handle(sinkAddedTriggers(repositories))
                 .flatMap(this::saveUserSettings)
                 .defaultIfEmpty(false)
@@ -237,6 +246,10 @@ public class UserSettingService {
         return userSettingRepository.findByGithubInstallationId(installationId)
                 .timeout(Duration.ofSeconds(3))
                 .transformDeferred(RetryOperator.of(mongoRetry))
+                .switchIfEmpty(Mono.error(new WebhookMainException(
+                    String.format("User settings not found for installationId: %s", installationId),
+                    HttpStatus.NOT_FOUND))
+                )
                 .map(userSettingMapper::settingToDto)
                 .doOnNext(settings -> log.info("User settings retrieved successfully for installationId: {}", installationId))
                 .doOnSuccess(settings -> {
@@ -256,13 +269,16 @@ public class UserSettingService {
                 .map(GHWebhookInstallationRepoPayload.Repository::getId)
                 .toList();
         return (userSetting,sink) -> {
-            boolean removed = userSetting.getRepositories().removeIf(repo -> repoIdsToRemove.contains(repo.getRepoId()));
+            List<RepositoryConfig> repos = new ArrayList<>(userSetting.getRepositories());
+            boolean removed = repos.removeIf(repo -> repoIdsToRemove.contains(repo.getRepoId()));
             if (removed) {
+                userSetting.setRepositories(repos);
                 userSetting.setUpdatedAt(LocalDateTime.now());
                 sink.next(userSetting);
                 return;
             }
-            log.info("Repository {} not found in user settings ", repositories);
+            log.info("No repositories removed - IDs {} not found for installation {}",
+                     repoIdsToRemove, userSetting.getGithubInstallationId());
             sink.complete();
         };
     }
@@ -272,26 +288,31 @@ public class UserSettingService {
             List<Long> existingRepoIds = userSetting.getRepositories().stream()
                     .map(RepositoryConfig::getRepoId)
                     .toList();
-            repositories.stream()
+
+            List<RepositoryConfig> newRepos = repositories.stream()
                     .filter(repo -> !existingRepoIds.contains(repo.getId()))
-                    .forEach(repo -> {
-                        RepositoryConfig newRepoConfig = RepositoryConfig.builder()
-                                .repoId(repo.getId())
-                                .repoName(repo.getName())
-                                .rules(AnalysisRules.defaults())
-                                .triggers(TriggerSettings.builder().build())
-                                .isActive(true)
-                                .metadata(RepositoryMetadata.builder().build())
-                                .notifications(NotificationSettings.builder().build())
-                                .build();
-                        userSetting.getRepositories().add(newRepoConfig);
-                    });
-            if(userSetting.getRepositories().size() != existingRepoIds.size()){
+                    .map(repo -> RepositoryConfig.builder()
+                            .repoId(repo.getId())
+                            .repoName(repo.getName())
+                            .rules(AnalysisRules.defaults())
+                            .triggers(TriggerSettings.builder().build())
+                            .isActive(true)
+                            .metadata(RepositoryMetadata.builder().build())
+                            .notifications(NotificationSettings.builder().build())
+                            .build())
+                    .toList();
+
+            if(!newRepos.isEmpty()){
+                List<RepositoryConfig> updatedRepos = new ArrayList<>(newRepos);
+                updatedRepos.addAll(userSetting.getRepositories());
+                userSetting.setRepositories(updatedRepos);
                 userSetting.setUpdatedAt(LocalDateTime.now());
                 sink.next(userSetting);
                 return;
             }
-            log.info("No new repositories to add in user settings ");
+            log.info("No new repositories to add - all IDs {} already exist for installation {}",
+                     repositories.stream().map(GHWebhookInstallationRepoPayload.Repository::getId).toList(),
+                     userSetting.getGithubInstallationId());
             sink.complete();
         };
     }

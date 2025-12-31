@@ -61,6 +61,14 @@ public class WebhookService {
         };
     }
 
+    /**
+     * Handles GitHub App INSTALLATION_REPOSITORIES events (added/removed).
+     * - ADDED action: adds new repositories to user settings
+     * - REMOVED action: removes repositories from user settings
+     *
+     * @param payload GitHub installation repositories webhook payload
+     * @return Mono emitting true if the operation succeeds
+     */
     private Mono<Boolean> handleNewReposInstallationEvent(GHWebhookInstallationRepoPayload payload) {
         log.info("Processing Installation Repositories event for installation ID {} action {}", payload.getInstallation().getId(),payload.getAction());
         if(ActionType.REMOVED.name().equalsIgnoreCase(payload.getAction())){
