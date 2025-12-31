@@ -33,4 +33,12 @@ public class ConfigController {
                 .map(ResponseEntity::ok)
                 .doOnSuccess(r -> log.info("=== Successfully retrieved AI models ==="));
     }
+
+    @GetMapping("/lenguages-available")
+    public Mono<ResponseEntity<List<String>>> getLenguagesAvailable() {
+        log.info("Retrieving available languages");
+        return configService.getLenguagesAvailable()
+                .map(ResponseEntity::ok)
+                .doOnSuccess(r -> log.info("=== Successfully retrieved languages ==="));
+    }
 }

@@ -24,4 +24,6 @@ public class Config {
     private String configId;
     @Field("ai_models_available")
     private List<String> aiModelsAvailable;
+    @Field("languages_available")
+    private List<String> languagesAvailable;
 }

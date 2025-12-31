@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ConfigService {
@@ -43,5 +44,20 @@ public class ConfigService {
                         error
                 ));
 
+    }
+
+    public Mono<List<String>> getLenguagesAvailable() {
+        log.info("Fetching available languages from configuration");
+
+        return configRepository.findByConfigId("GLOBAL")
+                .timeout(Duration.ofSeconds(3))
+                .transformDeferred(RetryOperator.of(mongoRetry))
+                .map(Config::getLanguagesAvailable)
+                .doOnSuccess(languages -> log.info("Retrieved {} languages", languages.size()))
+                .onErrorMap(error -> new MongoDbException(
+                        "Error retrieving languages from configuration",
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        error
+                ));
     }
 }
