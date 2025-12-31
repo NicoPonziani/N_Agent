@@ -1,5 +1,7 @@
 package it.np.n_agent.service;
 
+import io.github.resilience4j.reactor.retry.RetryOperator;
+import io.github.resilience4j.retry.Retry;
 import it.np.n_agent.dto.UserSettingDto;
 import it.np.n_agent.entity.GlobalSettings;
 import it.np.n_agent.entity.UserSetting;
@@ -11,10 +13,13 @@ import it.np.n_agent.repository.UserSettingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 import static it.np.n_agent.utilities.UserSettingUtility.buildAccountInfo;
@@ -27,13 +32,25 @@ public class UserSettingService {
 
     private final UserSettingRepository userSettingRepository;
     private final UserSettingMapper userSettingMapper;
+    private final Retry mongoRetry;
 
     @Autowired
-    public UserSettingService(UserSettingRepository userSettingRepository, UserSettingMapper userSettingMapper) {
+    public UserSettingService(UserSettingRepository userSettingRepository,
+                            UserSettingMapper userSettingMapper,
+                            Retry mongoRetry) {
         this.userSettingRepository = userSettingRepository;
         this.userSettingMapper = userSettingMapper;
+        this.mongoRetry = mongoRetry;
     }
 
+    /**
+     * Builds a UserSetting object from GitHub App installation webhook payload.
+     * Called when receiving an INSTALLATION event with CREATED action.
+     *
+     * @param payload GitHub webhook payload containing installation data
+     * @return Mono emitting UserSetting built with default values
+     * @throws WebhookMainException if building fails
+     */
     public Mono<UserSetting> buildUserSetting(GHWebhookInstallationPaylaod payload){
         log.info("Building user setting for installation ID: {}", payload.getInstallation().getId());
 
@@ -60,9 +77,19 @@ public class UserSettingService {
         ));
     }
 
+    /**
+     * Saves user settings to MongoDB with automatic retry and timeout.
+     * Applies exponential retry configuration (max 3 attempts) and 5-second timeout.
+     *
+     * @param userSetting UserSetting entity to save
+     * @return Mono emitting true if save succeeds
+     * @throws MongoDbException if save fails after all retries
+     */
     public Mono<Boolean> saveUserSettings(UserSetting userSetting){
         log.info("Saving user setting for installation ID: {}", userSetting.getGithubInstallationId());
         return userSettingRepository.save(userSetting)
+                .timeout(Duration.ofSeconds(5))
+                .transformDeferred(RetryOperator.of(mongoRetry))
                 .doOnSuccess(saved -> log.info("User setting saved successfully for installation ID: {}", userSetting.getGithubInstallationId()))
                 .onErrorMap(error -> new MongoDbException(
                     String.format("Failed to save user setting for installation ID: %s", userSetting.getGithubInstallationId()),
@@ -71,9 +98,21 @@ public class UserSettingService {
                 .map(e -> true);
     }
 
+    /**
+     * Deletes user settings from MongoDB for a specific installation and userId.
+     * Called when receiving INSTALLATION event with DELETED action.
+     * Applies automatic retry and 5-second timeout.
+     *
+     * @param installationId GitHub App installation ID
+     * @param userId GitHub user ID
+     * @return Mono emitting true if deletion succeeds (even if no document found)
+     * @throws MongoDbException if deletion fails after all retries
+     */
     public Mono<Boolean> deleteUserSettings(Long installationId, Long userId) {
         log.info("Deleting user settings for installation ID: {} and userId: {}", installationId, userId);
         return userSettingRepository.deleteByInstallationIdAndUserId(installationId,userId)
+                .timeout(Duration.ofSeconds(5))
+                .transformDeferred(RetryOperator.of(mongoRetry))
                 .doOnSuccess(deleted -> {
                     if(deleted != null && deleted > 0)
                         log.info("User settings deleted successfully");
@@ -87,6 +126,17 @@ public class UserSettingService {
                 .map(e -> true);
     }
 
+    /**
+     * Updates user settings by merging with existing data.
+     * If user exists, overwrites globalSettings and repositories while keeping createdAt.
+     * If not exists, creates new document with current timestamp.
+     * Automatically invalidates cache to force reload on next access.
+     *
+     * @param settings DTO with new settings to save
+     * @return Mono emitting true if update succeeds
+     * @throws MongoDbException if operation fails after all retries
+     */
+    @CacheEvict(value = "userSettings", key = "#settings.userId")
     public Mono<Boolean> updateUserSettings(UserSettingDto settings) {
         log.info("Saving user settings for userId: {}", settings.getUserId());
         return Mono.defer(() -> {
@@ -98,9 +148,13 @@ public class UserSettingService {
             settingEntity.setUpdatedAt(now);
             return Mono.just(settingEntity);
         })
-        .zipWhen(userSetting -> userSettingRepository.findByUserId(userSetting.getUserId()))
+        .zipWhen(userSetting -> userSettingRepository.findByUserId(userSetting.getUserId())
+                .timeout(Duration.ofSeconds(3))
+                .transformDeferred(RetryOperator.of(mongoRetry)))
         .flatMap(tuple -> mergeSettings(tuple.getT1(),tuple.getT2()))
-        .flatMap(userSettingRepository::save)
+        .flatMap(userSetting -> userSettingRepository.save(userSetting)
+                .timeout(Duration.ofSeconds(5))
+                .transformDeferred(RetryOperator.of(mongoRetry)))
         .doOnSuccess(saved -> log.info("User settings saved successfully for userId: {}", settings.getUserId()))
         .onErrorMap(error -> new MongoDbException(
             String.format("Failed to save user settings for userId: %s", settings.getUserId()),
@@ -109,9 +163,22 @@ public class UserSettingService {
         .map(e -> true);
     }
 
+    /**
+     * Retrieves user settings for userId with automatic caching.
+     * Result is cached for 50 minutes (configured in CacheConfig).
+     * Called on every PR event to check if analysis is enabled for the repository.
+     * Applies automatic retry (max 3 attempts) and 3-second timeout.
+     *
+     * @param userId GitHub user ID
+     * @return Mono emitting UserSettingDto if found, empty if not exists
+     * @throws MongoDbException if retrieval fails after all retries
+     */
+    @Cacheable(value = "userSettings", key = "#userId")
     public Mono<UserSettingDto> getUserSettings(Long userId) {
         log.info("Retrieving user settings for userId: {}", userId);
         return userSettingRepository.findByUserId(userId)
+                .timeout(Duration.ofSeconds(3))
+                .transformDeferred(RetryOperator.of(mongoRetry))
                 .map(userSettingMapper::settingToDto)
                 .doOnNext(settings -> log.info("User settings retrieved successfully for userId: {}", userId))
                 .doOnSuccess(settings -> {
