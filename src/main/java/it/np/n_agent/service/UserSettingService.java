@@ -136,9 +136,9 @@ public class UserSettingService {
      * @return Mono emitting true if update succeeds
      * @throws MongoDbException if operation fails after all retries
      */
-    @CacheEvict(value = "userSettings", key = "#settings.userId")
+    @CacheEvict(value = "userSettings", key = "#settings.githubInstallationId")
     public Mono<Boolean> updateUserSettings(UserSettingDto settings) {
-        log.info("Saving user settings for userId: {}", settings.getUserId());
+        log.info("Saving user settings for githubInstallationId: {}", settings.getGithubInstallationId());
         return Mono.defer(() -> {
             UserSetting settingEntity = userSettingMapper.settingToEntity(settings);
             LocalDateTime now = LocalDateTime.now();
@@ -149,7 +149,7 @@ public class UserSettingService {
             return Mono.just(settingEntity);
         })
         .zipWhen(userSetting ->
-                userSettingRepository.findByUserId(userSetting.getUserId())
+                userSettingRepository.findByGithubInstallationId(userSetting.getGithubInstallationId())
                 .timeout(Duration.ofSeconds(3))
                 .transformDeferred(RetryOperator.of(mongoRetry))
         )
@@ -159,9 +159,9 @@ public class UserSettingService {
                 .timeout(Duration.ofSeconds(5))
                 .transformDeferred(RetryOperator.of(mongoRetry))
         )
-        .doOnSuccess(saved -> log.info("User settings saved successfully for userId: {}", settings.getUserId()))
+        .doOnSuccess(saved -> log.info("User settings saved successfully for githubInstallationId: {}", settings.getGithubInstallationId()))
         .onErrorMap(error -> new MongoDbException(
-            String.format("Failed to save user settings for userId: %s", settings.getUserId()),
+            String.format("Failed to save user settings for githubInstallationId: %s", settings.getGithubInstallationId()),
             HttpStatus.INTERNAL_SERVER_ERROR,
             error))
         .map(e -> true);
@@ -173,25 +173,25 @@ public class UserSettingService {
      * Called on every PR event to check if analysis is enabled for the repository.
      * Applies automatic retry (max 3 attempts) and 3-second timeout.
      *
-     * @param userId GitHub user ID
+     * @param installationId GitHub installation ID
      * @return Mono emitting UserSettingDto if found, empty if not exists
      * @throws MongoDbException if retrieval fails after all retries
      */
-    @Cacheable(value = "userSettings", key = "#userId")
-    public Mono<UserSettingDto> getUserSettings(Long userId) {
-        log.info("Retrieving user settings for userId: {}", userId);
-        return userSettingRepository.findByUserId(userId)
+    @Cacheable(value = "userSettings", key = "#installationId")
+    public Mono<UserSettingDto> getUserSettings(Long installationId) {
+        log.info("Retrieving user settings for installationId: {}", installationId);
+        return userSettingRepository.findByGithubInstallationId(installationId)
                 .timeout(Duration.ofSeconds(3))
                 .transformDeferred(RetryOperator.of(mongoRetry))
                 .map(userSettingMapper::settingToDto)
-                .doOnNext(settings -> log.info("User settings retrieved successfully for userId: {}", userId))
+                .doOnNext(settings -> log.info("User settings retrieved successfully for installationId: {}", installationId))
                 .doOnSuccess(settings -> {
                     if (settings == null) {
-                        log.info("No user settings found for userId: {}", userId);
+                        log.info("No user settings found for installationId: {}", installationId);
                     }
                 })
                 .onErrorMap(error -> new MongoDbException(
-                    String.format("Failed to retrieve user settings for userId: %s", userId),
+                    String.format("Failed to retrieve user settings for installationId: %s", installationId),
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     error)
                 );

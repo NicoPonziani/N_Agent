@@ -11,6 +11,8 @@ public interface UserSettingRepository extends ReactiveMongoRepository<UserSetti
 
     Mono<UserSetting> findByUserId(Long userId);
 
+    Mono<UserSetting> findByGithubInstallationId(Long installationId);
+
     @DeleteQuery("{ \"github_installation_id\": ?0, \"user_id\": ?1 }")
     Mono<Long> deleteByInstallationIdAndUserId(Long installationId, Long userId);
 
