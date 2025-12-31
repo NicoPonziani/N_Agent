@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.util.List;
 
 @Data
@@ -16,12 +17,11 @@ import java.util.List;
 @AllArgsConstructor
 public class UserSettingDto {
 
-    @NotBlank(message = "userId cannot be blank")
+    @NotNull(message = "userId cannot be null")
     private Long userId;
     @NotNull(message = "githubInstallationId cannot be null")
     private Long githubInstallationId;
     @Valid
-    @NotNull(message = "account cannot be null")
     private AccountInfoDto account;
     @Valid
     private List<RepositoryConfigDto> repositories;
@@ -31,10 +31,8 @@ public class UserSettingDto {
     @Data
     @Builder
     public static class AccountInfoDto {
-        @NotBlank(message = "login cannot be blank")
         private String login;
         private AccountType type;
-        @NotBlank(message = "email cannot be blank")
         private String email;
         private String name;
     }
@@ -47,15 +45,26 @@ public class UserSettingDto {
 
         @NotBlank(message = "repoId cannot be blank")
         private String repoId;
+
+        @NotBlank(message = "repoName cannot be blank")
         private String repoName;
+
         private Boolean isActive;
+
+        @Valid
         private AnalysisRulesDto rules;
+
+        @Valid
         private TriggerSettingsDto triggers;
+
+        @Valid
         private NotificationSettingsDto notifications;
 
         @Data
         @Builder
         public static class AnalysisRulesDto {
+            private Boolean nullPointerPrediction;
+            private Boolean debtEstimation;
             private Boolean detectTODOs;
             private Boolean predictRegret;
             private Boolean checkComplexity;

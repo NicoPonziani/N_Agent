@@ -6,11 +6,10 @@ import it.np.n_agent.entity.HistoricalIssueEntity;
 import it.np.n_agent.exception.AiAnalysisException;
 import it.np.n_agent.exception.MongoDbException;
 import it.np.n_agent.repository.IssueRepository;
+import it.np.n_agent.utilities.PromptUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -21,6 +20,7 @@ import reactor.core.scheduler.Schedulers;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.AnalysisRulesDto;
 import static it.np.n_agent.utilities.ResourceUtility.loadPrompt;
 
 @Service
@@ -36,12 +36,21 @@ public class AiService {
         this.issueRepository = issueRepository;
     }
 
-    public Mono<CodeAnalysisResult> analyzeDiff(String diff){
+    /**
+     * Analyzes code diff using AI model with configured analysis rules.
+     * Sends diff to OpenAI GPT model with historical issues context via function calling.
+     * Runs on bounded elastic scheduler to handle potentially blocking AI API calls.
+     *
+     * @param diff Git diff content to analyze
+     * @param rules Analysis rules configuration (null pointer prediction, debt estimation, etc.)
+     * @return Mono emitting CodeAnalysisResult with detected issues and recommendations
+     * @throws AiAnalysisException if AI analysis fails
+     */
+    public Mono<CodeAnalysisResult> analyzeDiff(String diff, AnalysisRulesDto rules){
         log.info("Analyzing diff START");
-
         return Mono.fromCallable(() ->
             chatModel.prompt(loadPrompt("historical_issue_prompt.md").getContentAsString(StandardCharsets.UTF_8))
-                     .user(String.format("Analyze the following code diff and provide suggestions for improvements\n%s.",diff))
+                     .user(PromptUtility.generatePullRequestPrompt("user_analysis_rules.md", rules,diff))
                      .toolCallbacks(ToolCallbacks.from(new HistoricalIssuesFunction(issueRepository)))
                      .call()
                      .entity(CodeAnalysisResult.class)
@@ -51,6 +60,18 @@ public class AiService {
         .onErrorMap(error -> new AiAnalysisException("Failed to analyze code diff", HttpStatus.INTERNAL_SERVER_ERROR, error));
     }
 
+    /**
+     * Handles AI analysis response by saving detected issues to historical database.
+     * Processes recommendation (APPROVE, REQUEST_CHANGES, COMMENT) and persists issues for future predictions.
+     * If recommendation is APPROVE or no issues found, returns analysis without saving.
+     * Otherwise, maps issues to HistoricalIssueEntity and saves to MongoDB.
+     *
+     * @param analysis AI analysis result containing issues and recommendation
+     * @param prNumber Pull request number for issue tracking
+     * @param userInstallationId GitHub App installation ID for issue association
+     * @return Mono emitting the original analysis result after saving issues
+     * @throws MongoDbException if saving historical issues fails
+     */
     public Mono<CodeAnalysisResult> handleAiResponse(CodeAnalysisResult analysis,Long prNumber, Long userInstallationId) {
         log.info("Handling AI response with recommendation: {} \nsummary: {}",analysis.getRecommendation(), analysis.getSummary());
 

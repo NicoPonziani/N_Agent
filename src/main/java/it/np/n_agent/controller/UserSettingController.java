@@ -3,17 +3,12 @@ package it.np.n_agent.controller;
 import it.np.n_agent.dto.UserSettingDto;
 import it.np.n_agent.service.UserSettingService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 
@@ -30,10 +25,18 @@ public class UserSettingController {
         this.userSettingService = userSettingService;
     }
 
-    @GetMapping("/{user-id}")
-    public Mono<ResponseEntity<UserSettingDto>> getUserSettings(@PathVariable(name = "user-id") @Valid @NotBlank Long userId) {
-        log.info("Retrieving user settings for userId: {}", userId);
-        return userSettingService.getUserSettings(userId)
+    /**
+     * Retrieves user settings for a specific GitHub installation ID.
+     * Returns 200 OK with settings if found, 404 Not Found if user has no settings.
+     * Result is cached by service layer for 50 minutes.
+     *
+     * @param installationId GitHub installation ID
+     * @return Mono emitting ResponseEntity with UserSettingDto or 404 status
+     */
+    @GetMapping("/{installation-id}")
+    public Mono<ResponseEntity<UserSettingDto>> getUserSettings(@PathVariable(name = "installation-id") @Valid @NotNull Long installationId) {
+        log.info("Retrieving user settings for installationId: {}", installationId);
+        return userSettingService.getUserSettings(installationId)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build())
                 .doOnSuccess(response -> {
@@ -44,9 +47,18 @@ public class UserSettingController {
                 });
     }
 
+    /**
+     * Saves or updates user settings for a GitHub user.
+     * Validates input DTO, merges with existing settings if present, invalidates cache.
+     * Returns 200 OK on success.
+     *
+     * @param settings UserSettingDto with updated configuration
+     * @return Mono emitting ResponseEntity with success message
+     * @throws it.np.n_agent.exception.MongoDbException if save operation fails
+     */
     @PostMapping("/save")
     public Mono<ResponseEntity<String>> saveUserSettings(@RequestBody @Valid UserSettingDto settings) {
-        log.info("Received user settings for userId: {}", settings.getUserId());
+        log.info("Received user settings for installationId: {}", settings.getGithubInstallationId());
 
         return userSettingService.updateUserSettings(settings)
                 .then(Mono.just(ResponseEntity.ok("User settings saved successfully")))

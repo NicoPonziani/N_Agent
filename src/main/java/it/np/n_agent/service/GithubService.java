@@ -1,7 +1,6 @@
 package it.np.n_agent.service;
 
 import it.np.n_agent.exception.GitHubApiException;
-import it.np.n_agent.exception.WebhookMainException;
 import it.np.n_agent.github.enums.HeaderGithubUtility;
 import it.np.n_agent.service.auth.GitHubAuthService;
 import org.slf4j.Logger;
@@ -9,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -31,6 +29,16 @@ public class GithubService {
         this.authService = authService;
     }
 
+    /**
+     * Retrieves Git diff content from GitHub API for a pull request.
+     * Obtains installation token, fetches diff using GitHub API v3 format, applies retry logic.
+     * Uses 30-second timeout and retries up to 2 times on failure.
+     *
+     * @param apiPath GitHub API URL for the pull request
+     * @param installationId GitHub App installation ID for authentication
+     * @return Mono emitting diff content as String
+     * @throws GitHubApiException if API call fails after retries or auth fails
+     */
     public Mono<String> retrieveDiff(String apiPath, Long installationId) {
         log.info("Fetching diff from: {}", apiPath);
         return authService.getInstallationToken(installationId)

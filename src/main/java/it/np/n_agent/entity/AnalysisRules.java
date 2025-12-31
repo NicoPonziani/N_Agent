@@ -15,7 +15,14 @@ import java.util.List;
 @AllArgsConstructor
 public class AnalysisRules {
 
-    // Feature toggles
+    @Builder.Default
+    @Field("null_pointer_prediction")
+    private Boolean nullPointerPrediction = true;
+
+    @Builder.Default
+    @Field("debt_estimation")
+    private Boolean debtEstimation = true;
+
     @Builder.Default
     @Field("detect_todos")
     private Boolean detectTODOs = true;
