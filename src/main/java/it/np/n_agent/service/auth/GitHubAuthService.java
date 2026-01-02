@@ -110,31 +110,40 @@ public class GitHubAuthService {
     }
 
     /**
-     * Loads GitHub App private key from configured path (filesystem or classpath).
+     * Loads GitHub App private key from Base64 env variable or configured path.
+     * Priority: GITHUB_PRIVATE_KEY_BASE64 env var > filesystem/classpath file.
      * Supports both PKCS#1 (RSA) and PKCS#8 formats.
      * Uses BouncyCastle PEM parser to handle PEM encoded keys.
      *
      * @return PrivateKey instance for JWT signing
-     * @throws IOException if key file not found, not readable, or format unsupported
+     * @throws IOException if key not found, not readable, or format unsupported
      */
     private PrivateKey loadPrivateKey() throws IOException {
-        log.info("Loading private key from configured path");
-
         String keyContent;
-        final String privateKeyPath = gitHubConfig.getApp().getPrivateKeyPath();
-        if (privateKeyPath.startsWith("classpath:")) {
-            String resourcePath = privateKeyPath.replace("classpath:", "");
-            try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
 
-                if (inputStream == null) {
-                    throw new IOException("Key not found in classpath: " + resourcePath);
+        // Priority 1: Try Base64 environment variable (for Railway/cloud deployments)
+        String base64Key = System.getenv("GITHUB_PRIVATE_KEY_BASE64");
+        if (base64Key != null && !base64Key.isBlank()) {
+            log.info("Loading private key from GITHUB_PRIVATE_KEY_BASE64 environment variable");
+            byte[] decodedKey = java.util.Base64.getDecoder().decode(base64Key);
+            keyContent = new String(decodedKey, StandardCharsets.UTF_8);
+        }
+        // Priority 2: Try file path (filesystem or classpath)
+        else {
+            log.info("Loading private key from configured path");
+            final String privateKeyPath = gitHubConfig.getApp().getPrivateKeyPath();
+
+            if (privateKeyPath.startsWith("classpath:")) {
+                String resourcePath = privateKeyPath.replace("classpath:", "");
+                try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+                    if (inputStream == null) {
+                        throw new IOException("Key not found in classpath: " + resourcePath);
+                    }
+                    keyContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
                 }
-
-                keyContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            } else {
+                keyContent = Files.readString(Paths.get(privateKeyPath), StandardCharsets.UTF_8);
             }
-
-        } else {
-            keyContent = Files.readString(Paths.get(privateKeyPath), StandardCharsets.UTF_8);
         }
 
         try (PEMParser pemParser = new PEMParser(new StringReader(keyContent))) {
