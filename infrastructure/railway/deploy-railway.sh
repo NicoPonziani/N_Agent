@@ -1,4 +1,4 @@
-#!/bin/bash
+a#!/bin/bash
 
 # ============================================
 # N_Agent - Railway Deployment Script
@@ -67,10 +67,11 @@ railway variables set GITHUB_WEBHOOK_SECRET="${GITHUB_WEBHOOK_SECRET}"
 # Upload private key as base64
 echo ""
 echo "📤 Uploading GitHub private key..."
-PRIVATE_KEY_PATH="code-analisys-agent.2025-12-17.private-key.pem"
+PRIVATE_KEY_PATH="../../code-analisys-agent.2025-12-17.private-key.pem"
 
 if [ ! -f "${PRIVATE_KEY_PATH}" ]; then
     echo "❌ Private key not found at ${PRIVATE_KEY_PATH}"
+    echo "ℹ️  Place your private key in the project root"
     exit 1
 fi
 

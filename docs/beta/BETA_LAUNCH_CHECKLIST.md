@@ -158,7 +158,7 @@ Cosa aspettarsi:
 ✅ Analisi automatica PR con feedback AI
 ✅ Supporto dedicato via email
 ✅ Influenza roadmap prodotto
-✅ Free tier lifetime quando diventerà paid
+✅ Early access a tutte le nuove funzionalità
 
 📝 Dopo installazione:
 1. Installa l'app su un repository di test
@@ -261,9 +261,9 @@ docker inspect n-agent-beta | grep -A 10 Health
 - Support prioritario
 
 **🥈 Silver** (10+ PR analizzate):
-- Free tier lifetime (se paid)
-- Influenza roadmap
+- Influenza roadmap avanzata
 - Badge "Beta Tester" GitHub
+- Supporto prioritario esteso
 
 **🥇 Gold** (Bug report/feature contribuite):
 - Tutto Silver +

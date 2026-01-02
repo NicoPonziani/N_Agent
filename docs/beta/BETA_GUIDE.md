@@ -320,13 +320,13 @@ Verifica status servizio: https://status.n-agent.dev *(opzionale)*
 Grazie per partecipare al programma BETA! Il tuo feedback è prezioso per migliorare N_Agent.
 
 ### Benefit Beta Testers
-- ✅ **Free tier lifetime** quando l'app diventerà paid (se applicabile)
 - ✅ **Credito nel README** come contributor
 - ✅ **Early access** a nuove feature
 - ✅ **Influenza roadmap** tramite feedback
+- ✅ **Supporto prioritario** per bug e richieste
 
 ---
 
 **Versione Guida**: 1.0 (31/12/2024)  
-**Target Release Stabile**: Q2 2025
+**Target Release Stabile**: Q2 2026
 

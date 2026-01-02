@@ -88,10 +88,11 @@ railway variables set GITHUB_WEBHOOK_SECRET="$githubWebhookSecret"
 # Upload private key as base64
 Write-Host ""
 Write-Host "📤 Uploading GitHub private key..." -ForegroundColor Cyan
-$privateKeyPath = "code-analisys-agent.2025-12-17.private-key.pem"
+$privateKeyPath = "..\..\code-analisys-agent.2025-12-17.private-key.pem"
 
 if (!(Test-Path $privateKeyPath)) {
     Write-Host "❌ Private key not found at $privateKeyPath" -ForegroundColor Red
+    Write-Host "ℹ️  Place your private key in the project root" -ForegroundColor Yellow
     exit 1
 }
 
