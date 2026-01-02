@@ -1,0 +1,6 @@
+# Ignora Dockerfile per usare auto-detection Maven
+infrastructure/docker/
+Dockerfile
+*.dockerignore
+docker-compose.yml
+
