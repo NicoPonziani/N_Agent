@@ -124,7 +124,6 @@ public class WebhookService {
         final String commitSha = payload.getPullRequest().getHead().getSha();
         final String owner = payload.getPullRequest().getUser().getLogin();
         final String repo = payload.getRepository().getName();
-        final Long userId = payload.getSender().getId();
 
         WebhookBaseInfo baseInfo =
                 WebhookBaseInfo.builder()
@@ -136,7 +135,7 @@ public class WebhookService {
                 .repo(repo)
                 .build();
 
-        return userSettingService.getUserSettings(userId)
+        return userSettingService.getUserSettings(installationId)
                             .handle(sinkActionTriggers(payload))
                             .zipWhen(
                                     setting -> githubService.retrieveDiff(apiPath,installationId),
