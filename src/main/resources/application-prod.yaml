@@ -13,6 +13,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI}
+      database: ${MONGODB_DATABASE:code-agent-prod}
   ai:
     openai:
       api-key: ${OPEN_AI_KEY}
@@ -34,6 +35,12 @@ server:
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
+
+# ============================================
+# CORS CONFIGURATION
+# ============================================
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:https://n-agent-frontend.vercel.app,https://n-agent.app}
 
 webhook:
   github:
