@@ -13,6 +13,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/code-agent-beta}
+      database: ${MONGODB_DATABASE:code-agent}
   ai:
     openai:
       api-key: ${OPEN_AI_KEY}
