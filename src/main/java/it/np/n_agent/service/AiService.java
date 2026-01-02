@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 
 import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.AnalysisRulesDto;
@@ -56,8 +57,15 @@ public class AiService {
                      .entity(CodeAnalysisResult.class)
         )
         .subscribeOn(Schedulers.boundedElastic())
+        .timeout(Duration.ofSeconds(300)) // 5 minutes timeout for AI analysis
         .doOnSuccess(response -> log.info("AI analysis completed: {}",response))
-        .onErrorMap(error -> new AiAnalysisException("Failed to analyze code diff", HttpStatus.INTERNAL_SERVER_ERROR, error));
+        .onErrorMap(error -> {
+            if (error instanceof java.util.concurrent.TimeoutException) {
+                log.error("AI analysis timeout after 300 seconds");
+                return new AiAnalysisException("AI analysis timeout - diff might be too large", HttpStatus.GATEWAY_TIMEOUT, error);
+            }
+            return new AiAnalysisException("Failed to analyze code diff", HttpStatus.INTERNAL_SERVER_ERROR, error);
+        });
     }
 
     /**
