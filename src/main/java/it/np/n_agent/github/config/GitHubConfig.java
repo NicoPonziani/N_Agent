@@ -1,6 +1,5 @@
 package it.np.n_agent.github.config;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,8 +8,6 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.annotation.Validated;
-
-import java.io.File;
 
 @Configuration
 @ConfigurationProperties(prefix = "github")
@@ -33,23 +30,8 @@ public class GitHubConfig {
         @Positive(message = "GitHub App ID must be positive")
         private String id;
 
-        @NotBlank(message = "GitHub private key path is required")
+        // Private key path - optional if GITHUB_PRIVATE_KEY_BASE64 env var is set
         private String privateKeyPath;
-
-        @PostConstruct
-        public void validateConfiguration() {
-            File privateKeyFile = new File(privateKeyPath);
-            if (!privateKeyFile.exists()) {
-                throw new IllegalStateException(
-                        "GitHub private key file not found at: " + privateKeyPath
-                );
-            }
-            if (!privateKeyFile.canRead()) {
-                throw new IllegalStateException(
-                        "GitHub private key file is not readable: " + privateKeyPath
-                );
-            }
-        }
     }
 
     @Data
