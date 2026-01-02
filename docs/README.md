@@ -1,47 +1,49 @@
 # N_Agent Documentation
 
-Documentazione completa del progetto N_Agent.
+Complete documentation for the N_Agent project.
 
-## 📁 Struttura
+## 📁 Structure
 
 ### `/beta`
-Documentazione per il programma Beta Testing:
-- **[BETA_GUIDE.md](beta/BETA_GUIDE.md)** - Guida completa per beta testers
-- **[BETA_DEPLOYMENT_GUIDE.md](beta/BETA_DEPLOYMENT_GUIDE.md)** - 🚀 Guida deploy SaaS (Railway + Vercel)
-- **[BETA_LAUNCH_CHECKLIST.md](beta/BETA_LAUNCH_CHECKLIST.md)** - Checklist lancio beta (uso interno)
-- **[RELEASE_NOTES_v0.1.0-beta.md](beta/RELEASE_NOTES_v0.1.0-beta.md)** - Note di rilascio versione beta
+Documentation for Beta Testing program:
+- **[BETA_GUIDE.md](beta/BETA_GUIDE.md)** - Complete guide for beta testers
+- **[BETA_LAUNCH_CHECKLIST.md](beta/BETA_LAUNCH_CHECKLIST.md)** - Beta launch checklist (internal use)
+- **[BETA_DEPLOYMENT_GUIDE.md](beta/BETA_DEPLOYMENT_GUIDE.md)** - 🚀 Complete SaaS deployment guide (Railway + Vercel)
+- **[RELEASE_NOTES_v0.1.0-beta.md](beta/RELEASE_NOTES_v0.1.0-beta.md)** - Beta version release notes
 
 ### `/development`
-Documentazione per contributor e sviluppatori:
-- **[CONTRIBUTING.md](development/CONTRIBUTING.md)** - Guidelines per contribuire al progetto
+Documentation for contributors and developers:
+- **[CONTRIBUTING.md](development/CONTRIBUTING.md)** - Guidelines for contributing to the project
 
-## 🔗 Link Rapidi
+## 🔗 Quick Links
 
-- **[README Principale](../README.md)** - Overview del progetto
-- **[CHANGELOG](../CHANGELOG.md)** - Storico modifiche
-- **[Infrastructure](../infrastructure/README.md)** - Setup deployment
-- **[Reorganization Summary](REORGANIZATION_SUMMARY.md)** - 📋 Riepilogo riorganizzazione progetto
-
----
-
-## 👨‍💼 Per Maintainer
-
-Documentazione riservata a chi gestisce il deploy:
-- **[BETA_DEPLOYMENT_GUIDE.md](beta/BETA_DEPLOYMENT_GUIDE.md)** - 🚀 Deploy completo Railway + Vercel + GitHub App
-- **[REORGANIZATION_SUMMARY.md](REORGANIZATION_SUMMARY.md)** - Riepilogo modifiche struttura progetto
-- **[Infrastructure README](../infrastructure/README.md)** - Script deploy e Docker
+- **[Main README](../README.md)** - Project overview
+- **[CHANGELOG](../CHANGELOG.md)** - Change history
+- **[Infrastructure](../infrastructure/README.md)** - Deployment setup
+- **[Reorganization Summary](REORGANIZATION_SUMMARY.md)** - 📋 Project reorganization recap
 
 ---
 
-Se sei un utente finale che vuole usare N_Agent:
-1. Leggi il [README principale](../README.md)
-2. Segui la [Guida Beta Testers](beta/BETA_GUIDE.md)
-3. Installa l'app sul tuo repository GitHub
+## 👨‍💼 For Maintainers
 
-## 🛠️ Per Sviluppatori
+Reserved documentation for deployment managers:
+- **[BETA_DEPLOYMENT_GUIDE.md](beta/BETA_DEPLOYMENT_GUIDE.md)** - 🚀 Complete Railway + Vercel + GitHub App deployment
+- **[REORGANIZATION_SUMMARY.md](REORGANIZATION_SUMMARY.md)** - Project structure changes recap
+- **[Infrastructure README](../infrastructure/README.md)** - Deployment scripts and Docker
 
-Se vuoi contribuire allo sviluppo di N_Agent:
-1. Leggi [CONTRIBUTING.md](development/CONTRIBUTING.md)
-2. Consulta [Infrastructure README](../infrastructure/README.md) per setup locale
-3. Apri issue/PR su GitHub
+---
+
+## 📝 For Users
+
+If you're an end user who wants to use N_Agent:
+1. Read the [main README](../README.md)
+2. Follow the [Beta Testers Guide](beta/BETA_GUIDE.md)
+3. Install the app on your GitHub repository: **[Install N_Agent](https://github.com/apps/code-analisys-agent/installations/new)**
+
+## 🛠️ For Developers
+
+If you want to contribute to N_Agent development:
+1. Read [CONTRIBUTING.md](development/CONTRIBUTING.md)
+2. Check [Infrastructure README](../infrastructure/README.md) for local setup
+3. Open issues/PRs on GitHub
 

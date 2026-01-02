@@ -1,332 +1,291 @@
 # ============================================
-# N_Agent BETA - Guida per Beta Testers
+# N_Agent BETA - Beta Testers Guide
 # ============================================
 
-Benvenuto nel programma **BETA di N_Agent**! 🎉
+Welcome to the **N_Agent BETA program**! 🎉
 
-Questa guida ti aiuterà a installare e testare l'applicazione.
+This guide will help you install and test the application.
 
-## 📋 Indice
+## 📋 Table of Contents
 
-- [Cos'è N_Agent](#cosè-n_agent)
-- [Cosa Aspettarsi dalla BETA](#cosa-aspettarsi-dalla-beta)
-- [Requisiti](#requisiti)
-- [Installazione GitHub App](#installazione-github-app)
-- [Primo Utilizzo](#primo-utilizzo)
-- [Configurazione Avanzata](#configurazione-avanzata)
-- [Segnalare Bug](#segnalare-bug)
+- [What is N_Agent?](#what-is-n_agent)
+- [What to Expect from BETA](#what-to-expect-from-beta)
+- [Requirements](#requirements)
+- [GitHub App Installation](#github-app-installation)
+- [First Use](#first-use)
+- [Advanced Configuration](#advanced-configuration)
+- [Reporting Bugs](#reporting-bugs)
 - [FAQ](#faq)
-- [Supporto](#supporto)
+- [Support](#support)
 
 ---
 
-## Cos'è N_Agent?
+## What is N_Agent?
 
-**N_Agent** è una GitHub App intelligente che analizza automaticamente le tue Pull Request usando AI (GPT-4o-mini) per:
+**N_Agent** is an intelligent GitHub App that automatically analyzes your Pull Requests using AI (GPT-4o-mini) to:
 
-✅ Identificare code smells e anti-pattern  
-✅ Suggerire miglioramenti architetturali  
-✅ Verificare best practices  
-✅ Fornire feedback contestuale sul codice  
+✅ Identify code smells and anti-patterns  
+✅ Suggest architectural improvements  
+✅ Verify best practices  
+✅ Provide contextual code feedback  
 
 ---
 
-## Cosa Aspettarsi dalla BETA
+## What to Expect from BETA
 
-### ✅ Funzionalità Operative
-- ✅ Analisi automatica PR quando aperte/aggiornate
-- ✅ Commenti AI pubblicati direttamente nella PR
-- ✅ Configurazione per-repository personalizzabile
-- ✅ Support per trigger eventi (opened/reopened/synchronize)
+### ✅ Operational Features
+- ✅ Automatic PR analysis when opened/updated
+- ✅ AI comments published directly in the PR
+- ✅ Customizable per-repository configuration
+- ✅ Support for event triggers (opened/reopened/synchronize)
 
-### ⚠️ Limitazioni Note
-- ⚠️ **Analisi limitata a file modificati** (max 2000 token per analisi)
-- ⚠️ **Tempo risposta variabile** (dipende da carico OpenAI API)
-- ⚠️ **Nessuna interfaccia web** (configurazione via API REST)
-- ⚠️ **Log dettagliati esposti** per debugging (profilo beta)
+### ⚠️ Known Limitations
+- ⚠️ **Analysis limited to modified files** (max 2000 tokens per analysis)
+- ⚠️ **Variable response time** (depends on OpenAI API load)
+- ⚠️ **Web interface in development** (configuration via web panel available)
+- ⚠️ **Detailed logs exposed** for debugging (beta profile)
 
 ### 🐛 Known Issues
-- [ ] Analisi può fallire su diff molto grandi (>10k linee)
-- [ ] Nessun rate limiting su chiamate OpenAI (uso responsabile richiesto)
-- [ ] Cache non condivisa tra istanze (se scaled)
+- [ ] Analysis may fail on very large diffs (>10k lines)
+- [ ] Rate limiting on OpenAI calls (use responsibly)
+- [ ] Cache not shared between instances (if scaled)
 
 ---
 
-## Requisiti
+## Requirements
 
-### Account Necessari
-- ✅ **Account GitHub** (personale o organizzazione)
-- ✅ **Repository su GitHub** dove testare l'app
-- ✅ **Permessi Admin** sul repository per installare GitHub App
+### Minimum Requirements
+- **GitHub Account** (personal or organization)
+- **Repository** where you want to install N_Agent
+- **Pull Request workflow** (the app analyzes PRs)
 
-### Opzionale (per configurazione avanzata)
-- Tool per API REST (Postman, curl, Insomnia)
-
----
-
-## Installazione GitHub App
-
-### Step 1: Installa N_Agent Beta
-
-1. **Vai al link di installazione**:
-   ```
-   https://github.com/apps/n-agent-beta/installations/new
-   ```
-   *(Il link esatto ti sarà fornito via email)*
-
-2. **Seleziona account/organizzazione**:
-   - Scegli dove installare l'app (tuo account personale o org)
-
-3. **Scegli repository**:
-   - **Opzione A**: Tutti i repository (consigliato per testing completo)
-   - **Opzione B**: Solo repository selezionati (più sicuro)
-
-4. **Autorizza installazione**:
-   - Clicca "Install" e conferma
-
-### Step 2: Verifica Installazione
-
-1. Vai su **Settings** del tuo repository
-2. Clicca **Integrations** → **GitHub Apps**
-3. Verifica che **N_Agent Beta** sia presente
-
-### Step 3: Ottieni Installation ID
-
-Il tuo **Installation ID** ti serve per configurare l'app.
-
-**Come trovarlo**:
-```bash
-# Opzione A: Dalla URL dopo installazione
-# https://github.com/settings/installations/12345678
-# -> Installation ID = 12345678
-
-# Opzione B: Via API GitHub
-curl -H "Authorization: token YOUR_GITHUB_TOKEN" \
-  https://api.github.com/user/installations
-```
-
-📝 **Annota il tuo Installation ID**: _________________
+### Optional
+- Custom AI models (Claude, Ollama) - contact us for configuration
 
 ---
 
-## Primo Utilizzo
+## GitHub App Installation
 
-### Test 1: Analisi Automatica PR
+### Step 1: Install the App
 
-1. **Crea una nuova branch**:
-   ```bash
-   git checkout -b test-n-agent
-   ```
+1. Go to the installation page:
+   **[https://github.com/apps/code-analisys-agent/installations/new](https://github.com/apps/code-analisys-agent/installations/new)**
 
-2. **Fai modifiche a un file**:
-   ```bash
-   # Esempio: aggiungi un metodo Java
-   echo "public void testMethod() { }" >> src/Main.java
-   git add .
-   git commit -m "test: add test method"
-   git push origin test-n-agent
-   ```
+2. Click **"Install"**
 
-3. **Apri Pull Request**:
-   - Vai su GitHub
-   - Clicca "Compare & pull request"
-   - Titolo: "Test N_Agent Beta"
-   - Crea PR
+3. Choose:
+   - **All repositories** (app will analyze all your repos), or
+   - **Only select repositories** (recommended for testing)
 
-4. **Attendi analisi** (30-60 secondi):
-   - Verifica che appaia un commento da **n-agent-beta[bot]**
-   - Il commento conterrà feedback AI sul tuo codice
+4. Click **"Install & Authorize"**
 
-### Test 2: Trigger su Aggiornamento PR
+### Step 2: Verify Installation
 
-1. **Modifica la PR esistente**:
-   ```bash
-   echo "public void anotherMethod() { }" >> src/Main.java
-   git add .
-   git commit -m "test: add another method"
-   git push origin test-n-agent
-   ```
-
-2. **Verifica nuovo commento**:
-   - Dovrebbe apparire un nuovo commento con analisi aggiornata
+1. Go to: `https://github.com/settings/installations`
+2. You should see **"Code Analysis Agent"** in the installed apps list
+3. Click **"Configure"** to view permissions and selected repositories
 
 ---
 
-## Configurazione Avanzata
+## First Use
 
-### Visualizza Configurazione Corrente
+### Test the App
 
-```bash
-curl https://n-agent-beta.railway.app/code-agent/settings/{INSTALLATION_ID}
-```
+1. **Open a test Pull Request**:
+   - Create a new branch: `git checkout -b test/n-agent-demo`
+   - Make some code changes (add a file, modify logic, add a TODO comment)
+   - Commit: `git commit -m "Test N_Agent analysis"`
+   - Push: `git push origin test/n-agent-demo`
+   - Open PR on GitHub
 
-**Risposta esempio**:
-```json
-{
-  "githubInstallationId": 12345678,
-  "globalSettings": {
-    "aiModel": "gpt-4o-mini",
-    "language": "en"
-  },
-  "repositories": [
-    {
-      "repoId": 987654,
-      "repoName": "my-repo",
-      "isActive": true,
-      "triggers": {
-        "onPROpen": true,
-        "onPRReopen": true,
-        "onPRUpdate": true
-      },
-      "rules": {
-        "checkCodeSmells": true,
-        "checkSecurity": true,
-        "checkPerformance": true
-      }
-    }
-  ]
-}
-```
+2. **Wait for analysis** (30-60 seconds)
 
-### Disabilita Analisi per un Repository
+3. **Check PR comments**:
+   - N_Agent will add a comment with:
+     - **Summary**: Overall quality assessment
+     - **Findings**: List of issues found with severity
+     - **Suggestions**: Concrete improvements
 
-```bash
-curl -X PUT https://n-agent-beta.railway.app/code-agent/settings \
-  -H "Content-Type: application/json" \
-  -d '{
-    "githubInstallationId": 12345678,
-    "repositories": [
-      {
-        "repoId": 987654,
-        "repoName": "my-repo",
-        "isActive": false
-      }
-    ]
-  }'
-```
+### Example Analysis Result
 
-### Personalizza Trigger Eventi
+```markdown
+## 🤖 N_Agent Analysis
 
-```bash
-# Analisi solo su PR aperte, non su update
-curl -X PUT https://n-agent-beta.railway.app/code-agent/settings \
-  -H "Content-Type: application/json" \
-  -d '{
-    "githubInstallationId": 12345678,
-    "repositories": [
-      {
-        "repoId": 987654,
-        "triggers": {
-          "onPROpen": true,
-          "onPRReopen": true,
-          "onPRUpdate": false
-        }
-      }
-    ]
-  }'
+**Summary:**
+The changes introduce technical debt with 2 TODOs and a hardcoded value.
+Consider refactoring before merging.
+
+**Findings:**
+- 🟡 **TODO detected** (line 45, src/main.js): "TODO: add error handling"
+  - **Suggestion**: Implement try-catch block before merging
+
+- 🟠 **Magic Number** (line 67, src/config.js): Hardcoded value `3600`
+  - **Suggestion**: Extract to constant MAX_TIMEOUT
+
+**Code Regret Score**: 0.65/1.0 (Medium Risk)
 ```
 
 ---
 
-## Segnalare Bug
+## Advanced Configuration
 
-### Prima di Segnalare
-✅ Verifica che il bug non sia già nei [Known Issues](#-known-issues)  
-✅ Controlla che non sia un problema GitHub (webhook non ricevuto)  
-✅ Testa su repository diverso per confermare
+### Web Configuration Panel
 
-### Come Segnalare
+Access the configuration panel at:
+**[https://n-agent-frontend.vercel.app](https://n-agent-frontend.vercel.app)**
 
-1. **Apri Issue su GitHub**:
-   ```
-   https://github.com/yourusername/n_agent/issues/new
-   ```
+1. **Login with GitHub**
+2. **Select your repository**
+3. **Configure**:
+   - Analysis rules (enable/disable specific checks)
+   - Custom AI prompts
+   - Notification preferences
+   - Trigger events (when to analyze)
 
-2. **Usa template**:
-   ```markdown
-   **Versione**: BETA v0.1.0
-   **Installation ID**: [tuo ID]
-   **Repository**: [link al repo]
-   
-   **Descrizione Bug**
-   [Cosa è successo]
-   
-   **Step per Riprodurre**
-   1. Apri PR con file X
-   2. ...
-   
-   **Comportamento Atteso**
-   [Cosa ti aspettavi]
-   
-   **Screenshot/Log**
-   [Se disponibili]
-   ```
+### Per-Repository Settings
 
-3. **Aggiungi label**: `beta`, `bug`
+You can customize analysis for each repository:
 
-### Cosa Riceverai
-- ✅ Risposta entro **24-48 ore**
-- ✅ Tracciamento fix nella [Issue](https://github.com/yourusername/n_agent/issues)
-- ✅ Notifica quando fix deployato
+- **AI Model**: GPT-4o-mini (default), Claude, Ollama
+- **Analysis Depth**: Quick, Standard, Deep
+- **Custom Prompts**: Add domain-specific rules
+- **File Exclusions**: Ignore paths (e.g., `tests/`, `vendor/`)
+
+---
+
+## Reporting Bugs
+
+Found a bug? Help us improve! 🐛
+
+### Where to Report
+
+**GitHub Issues**: [https://github.com/NicoPonziani/N_Agent/issues](https://github.com/NicoPonziani/N_Agent/issues)
+
+### What to Include
+
+1. **Title**: Brief description (e.g., "Analysis fails on large PRs")
+2. **Description**:
+   - Steps to reproduce
+   - Expected behavior
+   - Actual behavior
+3. **Environment**:
+   - Repository (if public or you can share)
+   - PR link (if possible)
+4. **Logs** (if available):
+   - Check PR comments for error messages
+   - Include relevant details
+
+### Example Bug Report
+
+```markdown
+**Title**: Analysis timeout on PR with 500+ files changed
+
+**Description**:
+Opened a PR with 600 files changed (refactoring).
+N_Agent started analysis but never completed after 5 minutes.
+
+**Steps to Reproduce**:
+1. Open PR with >500 files changed
+2. Wait for analysis
+3. Analysis never completes
+
+**Expected**: Analysis completes or timeout message
+**Actual**: No feedback, stuck in "analyzing" state
+
+**Repository**: myorg/myproject (private)
+**PR**: #1234
+```
 
 ---
 
 ## FAQ
 
-### ❓ Quanto costa usare N_Agent Beta?
-**Gratuito** durante il periodo beta! (fino a 31/03/2025)
+### General
 
-### ❓ Posso usarlo su repository privati?
-**Sì**, N_Agent supporta repository pubblici e privati.
+**Q: Is N_Agent free?**  
+A: Yes, during the BETA program N_Agent is completely free. We're still evaluating the future pricing model.
 
-### ❓ L'AI legge tutto il mio codice?
-**No**, solo le modifiche (diff) della PR. Il codice NON viene salvato permanentemente.
+**Q: Which AI model does it use?**  
+A: Default is GPT-4o-mini for cost/performance balance. We support Claude and Ollama as alternatives.
 
-### ❓ Posso cambiare il modello AI?
-Nella beta è fisso su **gpt-4o-mini**. In futuro sarà configurabile.
+**Q: Does it store my code?**  
+A: **No**. N_Agent only reads PR diffs via GitHub API and never stores your source code. Analysis results are saved (summary + findings), but not the code itself.
 
-### ❓ Cosa succede se supero limiti OpenAI?
-L'analisi fallirà temporaneamente. Verrà aggiunto rate limiting in versione stabile.
+### Installation
 
-### ❓ Come disinstallo l'app?
-1. Vai su GitHub Settings → Integrations
-2. Trova N_Agent Beta → Configure
-3. Clicca "Uninstall"
+**Q: Can I install on private repositories?**  
+A: Yes! The app works on both public and private repositories.
 
-### ❓ I miei dati vengono salvati?
-Sì, solo configurazioni e installation ID in MongoDB. **Nessun codice sorgente** viene salvato.
+**Q: Can I install on organization repositories?**  
+A: Yes, if you have admin permissions on the organization.
+
+**Q: How do I uninstall the app?**  
+A: Go to `https://github.com/settings/installations`, find "Code Analysis Agent", click "Configure" → "Uninstall".
+
+### Usage
+
+**Q: Why isn't the app commenting on my PR?**  
+A: Check:
+1. App is installed on the repository
+2. PR has code changes (not just README/docs)
+3. Wait 60 seconds after opening PR
+4. Check Railway logs for errors (contact support)
+
+**Q: Can I disable analysis for specific PRs?**  
+A: Add `[skip-n-agent]` in the PR title to skip analysis.
+
+**Q: Analysis is too slow, can I speed it up?**  
+A: Analysis time depends on:
+- PR size (larger diffs take longer)
+- OpenAI API response time (variable)
+- Usually completes in 30-60 seconds
+
+**Q: Can I customize which files are analyzed?**  
+A: Yes! Use the web configuration panel to exclude paths (e.g., `tests/`, `*.md`).
+
+### Configuration
+
+**Q: Where do I configure custom rules?**  
+A: Web panel: [https://n-agent-frontend.vercel.app](https://n-agent-frontend.vercel.app)
+
+**Q: Can I use my own OpenAI API key?**  
+A: Not in the SaaS version. For self-hosting, yes (see documentation).
+
+**Q: Does it support languages other than English?**  
+A: AI responses are in English by default. Multi-language support coming in future versions.
 
 ---
 
-## Supporto
+## Support
 
-### 📧 Contatti
-- **Email**: support@n-agent.dev
-- **GitHub Issues**: [Link](https://github.com/yourusername/n_agent/issues)
-- **Discord** (opzionale): [Link server Discord]
+Need help? We're here!
 
-### ⏰ SLA Beta
-- Risposta entro: 24-48 ore
-- Uptime target: 95%
-- Manutenzione programmata: comunicata 24h prima
+### Channels
 
-### 📊 Status Page
-Verifica status servizio: https://status.n-agent.dev *(opzionale)*
+- **GitHub Issues**: [Bug reports & feature requests](https://github.com/NicoPonziani/N_Agent/issues)
+- **GitHub Discussions**: [Q&A and community support](https://github.com/NicoPonziani/N_Agent/discussions)
+- **Email**: nico.ponziani@gmail.com (for private inquiries)
 
----
+### Response Time
 
-## 🎁 Ringraziamenti
-
-Grazie per partecipare al programma BETA! Il tuo feedback è prezioso per migliorare N_Agent.
-
-### Benefit Beta Testers
-- ✅ **Credito nel README** come contributor
-- ✅ **Early access** a nuove feature
-- ✅ **Influenza roadmap** tramite feedback
-- ✅ **Supporto prioritario** per bug e richieste
+- **Bug reports**: Within 48 hours
+- **Feature requests**: Reviewed weekly
+- **Email support**: Within 72 hours
 
 ---
 
-**Versione Guida**: 1.0 (31/12/2024)  
-**Target Release Stabile**: Q2 2026
+## 🎁 Thank You
+
+Thank you for participating in the BETA program! Your feedback is invaluable for improving N_Agent.
+
+### Beta Tester Benefits
+- ✅ **Credit in README** as a contributor
+- ✅ **Early access** to new features
+- ✅ **Roadmap influence** via feedback
+- ✅ **Priority support** for bugs and requests
+
+---
+
+**Guide Version**: 1.0 (January 2, 2026)  
+**Target Stable Release**: Q2 2026
 

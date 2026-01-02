@@ -7,199 +7,183 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Beta](https://img.shields.io/badge/Status-BETA-orange.svg)](docs/beta/BETA_GUIDE.md)
 
-**N_Agent** è una GitHub App intelligente che analizza automaticamente le tue Pull Request utilizzando AI (GPT-4o-mini) per fornire feedback contestuale, identificare code smells e suggerire miglioramenti.
+**N_Agent** is an intelligent GitHub App that automatically analyzes your Pull Requests using AI (GPT-4o-mini) to provide contextual feedback, identify code smells, and help your team avoid technical debt.
 
-> 🎯 **Programma BETA Attivo!** - [Unisciti ora](docs/beta/BETA_GUIDE.md) per testare l'app e ricevere early access alle nuove funzionalità.
+> 🎯 **BETA Program Active!** - [Join now](docs/beta/BETA_GUIDE.md) to test the app and get early access to new features.
 
 ---
 
 ## 🚀 Quick Start
 
-### Per Utenti (Installa l'App)
+### For Users (Install the App)
 
-1. **Installa N_Agent sul tuo repository**
-   - Vai su: `https://github.com/apps/n-agent-beta` *(link verrà fornito)*
-   - Clicca **"Install"**
-   - Seleziona i repository da analizzare
+1. **Install N_Agent on your repository**
+   - Go to: **[https://github.com/apps/code-analisys-agent/installations/new](https://github.com/apps/code-analisys-agent/installations/new)**
+   - Click **"Install"**
+   - Select repositories to analyze
 
-2. **Configura le tue preferenze** *(opzionale)*
-   - Accedi al pannello di configurazione: `https://n-agent-beta.railway.app/setup`
-   - Personalizza regole di analisi, prompt AI, notifiche
+2. **Configure your preferences** *(optional)*
+   - Access the configuration panel: `https://n-agent-frontend.vercel.app`
+   - Customize analysis rules, AI prompts, notifications
 
-3. **Apri una Pull Request**
-   - L'app analizzerà automaticamente le modifiche
-   - Riceverai commenti AI direttamente sulla PR
+3. **Open a Pull Request**
+   - The app will automatically analyze changes
+   - You'll receive AI comments directly on the PR
 
-**Nessuna installazione locale richiesta!** Usa l'app come servizio SaaS.
+**No local installation required!** Use the app as a SaaS service.
 
 ---
 
-## ✨ Caratteristiche Principali
+## ✨ Key Features
 
-### 🤖 Analisi AI Automatica
-- **Feedback Contestuale**: Analisi intelligente delle modifiche al codice
-- **Code Smells Detection**: Identifica anti-pattern e bad practices
-- **Suggerimenti Pratici**: Soluzioni concrete per migliorare il codice
-- **Modelli AI Supportati**: GPT-4o-mini (default), Claude, Ollama
+### 🤖 AI-Powered Analysis
+- **Contextual Feedback**: Intelligent analysis of code changes using GPT-4
+- **Code Smells Detection**: Identifies anti-patterns and bad practices
+- **Technical Debt Prediction**: Highlights code that might cause future regret
+- **Practical Suggestions**: Concrete solutions to improve code quality
+- **Supported AI Models**: GPT-4o-mini (default), Claude, Ollama
 
-### ⚙️ Configurazione Personalizzabile
-- **Regole Per Repository**: Ogni repo può avere regole specifiche
-- **Prompt Personalizzati**: Adatta l'analisi al tuo stack tecnologico
-- **Trigger Configurabili**: Scegli quando attivare l'analisi (PR aperta, aggiornata, riaperta)
-- **Notifiche Granulari**: Controlla quando ricevere feedback
+### ⚙️ Customizable Configuration
+- **Per-Repository Rules**: Each repo can have specific settings
+- **Custom Prompts**: Adapt analysis to your tech stack
+- **Configurable Triggers**: Choose when to activate analysis (PR opened, updated, reopened)
+- **Granular Notifications**: Control when to receive feedback
 
-### 🔒 Sicurezza e Privacy
+### 🔒 Security & Privacy
 - **Webhook Signature Verification**: HMAC SHA-256 validation
-- **Accesso Read-Only al Codice**: L'app legge solo i diff delle PR
-- **Nessun Salvataggio Codice**: Zero retention del tuo codice sorgente
-- **GitHub App Permissions**: Permessi minimi necessari (PR read/write, Contents read)
+- **Read-Only Code Access**: App only reads PR diffs
+- **Zero Code Retention**: No storage of your source code
+- **Minimal GitHub App Permissions**: PR read/write, Contents read only
 
-### ⚡ Performance e Resilienza
-- **Reactive Architecture**: Spring WebFlux per alta concorrenza
-- **Cache Intelligente**: Riduzione chiamate API GitHub e MongoDB
-- **Retry Logic**: Gestione automatica fallimenti transitori
-- **Timeout Protection**: Nessuna analisi infinita
-
----
-
-## 🎯 Programma Beta Testers
-
-### Perché Partecipare?
-
-N_Agent è in **fase BETA** e cerchiamo beta testers per raccogliere feedback e migliorare l'app.
-
-**Benefici:**
-- ✅ **Early Access** a tutte le nuove feature
-- ✅ **Supporto Prioritario** via GitHub Issues
-- ✅ **Influenza sulla Roadmap** - richiedi feature personalizzate
-- ✅ **Riconoscimento Pubblico** come contributor nel progetto
-
-**Cosa Aspettarsi:**
-- ⚠️ L'app è stabile ma in evoluzione (possibili breaking changes)
-- ⚠️ Occasionali downtime per manutenzione (notifiche anticipate)
-- ⚠️ Alcune feature potrebbero cambiare in base ai feedback
-
-### Come Unirsi
-
-1. Leggi la [**Guida Beta Testers**](docs/beta/BETA_GUIDE.md)
-2. Installa l'app sui tuoi repository di test
-3. Apri issue con feedback, bug report o feature request
-4. (Opzionale) Contribuisci al codice - vedi [Contributing](docs/development/CONTRIBUTING.md)
+### ⚡ Performance & Resilience
+- **Reactive Architecture**: Spring WebFlux for high concurrency
+- **Intelligent Caching**: Reduces GitHub API and MongoDB calls
+- **Retry Logic**: Automatic handling of transient failures
+- **Timeout Protection**: No infinite analysis loops
 
 ---
 
-## 📚 Documentazione
+## 🎯 Beta Tester Program
 
-### Per Utenti
-- **[Guida Beta Testers](docs/beta/BETA_GUIDE.md)** - Come partecipare al programma beta
-- **[Configurazione App](docs/beta/BETA_GUIDE.md#configurazione)** - Setup pannello web
-- **[FAQ](docs/beta/BETA_GUIDE.md#faq)** - Domande frequenti
+### Why Participate?
 
-### Per Sviluppatori
-- **[Contributing Guide](docs/development/CONTRIBUTING.md)** - Come contribuire al progetto
-- **[Architecture Overview](docs/development/ARCHITECTURE.md)** - Architettura tecnica *(TODO)*
-- **[API Documentation](docs/development/API.md)** - Endpoints REST *(TODO)*
+N_Agent is in **BETA** and we're looking for beta testers to gather feedback and improve the app.
+
+**Benefits:**
+- ✅ **Early Access** to all new features
+- ✅ **Priority Support** via GitHub Issues
+- ✅ **Roadmap Influence** - request custom features
+- ✅ **Public Recognition** as a contributor in the project
+
+**What to Expect:**
+- ⚠️ The app is stable but evolving (possible breaking changes)
+- ⚠️ Occasional downtime for maintenance (advance notice provided)
+- ⚠️ Some features may change based on feedback
+
+### How to Join
+
+1. Read the [**Beta Testers Guide**](docs/beta/BETA_GUIDE.md)
+2. Install the app on your test repositories: **[Install N_Agent](https://github.com/apps/code-analisys-agent/installations/new)**
+3. Open issues with feedback, bug reports, or feature requests
+4. (Optional) Contribute code - see [Contributing](docs/development/CONTRIBUTING.md)
+
+---
+
+## 📚 Documentation
+
+### For Users
+- **[Beta Testers Guide](docs/beta/BETA_GUIDE.md)** - How to participate in the beta program
+- **[App Configuration](docs/beta/BETA_GUIDE.md#configuration)** - Web panel setup
+- **[FAQ](docs/beta/BETA_GUIDE.md#faq)** - Frequently asked questions
+
+### For Developers
+- **[Contributing Guide](docs/development/CONTRIBUTING.md)** - How to contribute to the project
+- **[Architecture Overview](docs/development/ARCHITECTURE.md)** - Technical architecture *(TODO)*
+- **[API Documentation](docs/development/API.md)** - REST endpoints *(TODO)*
 
 ### Release Notes
-- **[CHANGELOG](CHANGELOG.md)** - Storico modifiche
-- **[Release Notes v0.1.0-beta](docs/beta/RELEASE_NOTES_v0.1.0-beta.md)** - Dettagli release attuale
+- **[CHANGELOG](CHANGELOG.md)** - Change history
+- **[Release Notes v0.1.0-beta](docs/beta/RELEASE_NOTES_v0.1.0-beta.md)** - Current release details
 
 ---
 
-## 🏗️ Stack Tecnologico
+## 🏗️ Technology Stack
 
-### Backend
-- **Spring Boot 3.5.8** - Application framework
-- **Spring WebFlux** - Reactive web stack (non-blocking I/O)
-- **Spring AI 1.1.2** - AI model integrations (OpenAI, Anthropic, Ollama)
-- **Spring Data MongoDB Reactive** - Database persistence
-
-### Database
-- **MongoDB 7.0+** - NoSQL document store
-
-### AI/ML
-- **OpenAI GPT-4o-mini** - Default model
-- **Anthropic Claude** - Alternative model (supportato)
-- **Ollama** - Local models (supportato)
-
-### Integrations
-- **GitHub App** - Webhook events + REST API
-- **JWT (JJWT)** - GitHub App authentication
-- **WebClient** - Reactive HTTP client
+// ...existing code...
 
 ---
 
-## 🛠️ Self-Hosting (Opzionale)
+## 🛠️ Self-Hosting (Optional)
 
-> **Nota**: La maggior parte degli utenti **NON deve fare self-hosting**. Usa semplicemente l'app SaaS.
+> **Note**: Most users **do NOT need self-hosting**. Simply use the SaaS app.
 
-Se preferisci eseguire la tua istanza privata di N_Agent:
+If you prefer to run your own private instance of N_Agent:
 
-1. Clona il repository
-2. Consulta [Infrastructure Documentation](infrastructure/README.md)
-3. Segui la guida deployment Railway/Docker
+1. Clone the repository
+2. See [Infrastructure Documentation](infrastructure/README.md)
+3. Follow the Railway/Docker deployment guide
 
-**Requisiti self-hosting:**
+**Self-hosting requirements:**
 - Java 21+
 - MongoDB 7.0+
-- OpenAI API Key (o Claude/Ollama)
-- GitHub App creata manualmente
+- OpenAI API Key (or Claude/Ollama)
+- Manually created GitHub App
 
 ---
 
 ## 🤝 Contributing
 
-Contributi benvenuti! Vedi [CONTRIBUTING.md](docs/development/CONTRIBUTING.md) per linee guida.
+Contributions welcome! See [CONTRIBUTING.md](docs/development/CONTRIBUTING.md) for guidelines.
 
-### Come Contribuire
-1. Fork del repository
-2. Crea branch feature: `git checkout -b feature/amazing-feature`
-3. Commit modifiche: `git commit -m 'Add amazing feature'`
-4. Push al branch: `git push origin feature/amazing-feature`
-5. Apri Pull Request
+### How to Contribute
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open Pull Request
 
 ---
 
 ## 📝 License
 
-Questo progetto è rilasciato sotto licenza **MIT**. Vedi [LICENSE](LICENSE) per dettagli.
+This project is released under the **MIT** license. See [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙏 Supporto
+## 🙏 Support
 
-- **Bug Report**: [GitHub Issues](https://github.com/YOUR_USERNAME/n_agent/issues)
-- **Feature Request**: [GitHub Discussions](https://github.com/YOUR_USERNAME/n_agent/discussions)
-- **Email**: your.email@example.com *(per richieste private)*
+- **Bug Reports**: [GitHub Issues](https://github.com/NicoPonziani/N_Agent/issues)
+- **Feature Requests**: [GitHub Discussions](https://github.com/NicoPonziani/N_Agent/discussions)
+- **Email**: nico.ponziani@gmail.com *(for private inquiries)*
 
 ---
 
 ## 🗓️ Roadmap
 
-### ✅ v0.1.0-beta (Attuale)
-- Analisi automatica PR con GPT-4o-mini
-- Configurazioni personalizzabili per repository
-- Cache e retry logic
-- Webhook GitHub completi
+### ✅ v0.1.0-beta (Current)
+- Automatic PR analysis with GPT-4o-mini
+- Customizable configurations per repository
+- Cache and retry logic
+- Complete GitHub webhooks
 
 ### 🔄 v0.2.0 (Q1 2026)
-- **Frontend Web UI** per configurazione avanzata
-- Supporto Claude AI e Ollama
-- Analytics dashboard per maintainer
+- **Frontend Web UI** for advanced configuration
+- Claude AI and Ollama support
+- Analytics dashboard for maintainers
 - Multi-language prompt templates
 
 ### 🚀 v1.0.0 Stable (Q2 2026)
-- Testing completo e stabilizzazione
-- Documentazione estesa
-- Public release su GitHub Marketplace
+- Complete testing and stabilization
+- Extended documentation
+- Public release on GitHub Marketplace
 
 ---
 
 <div align="center">
 
-**[Installa N_Agent](https://github.com/apps/n-agent-beta)** | **[Documentazione](docs/)** | **[Unisciti al Beta Program](docs/beta/BETA_GUIDE.md)**
+**[Install N_Agent](https://github.com/apps/code-analisys-agent/installations/new)** | **[Documentation](docs/)** | **[Join Beta Program](docs/beta/BETA_GUIDE.md)**
 
-Made with ❤️ by [Your Name](https://github.com/YOUR_USERNAME)
+Made with ❤️ by [Nico Ponziani](https://github.com/NicoPonziani)
 
 </div>
 
