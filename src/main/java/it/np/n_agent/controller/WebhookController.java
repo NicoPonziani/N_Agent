@@ -51,10 +51,14 @@ public class WebhookController {
                     return EventType.retrievePayload(rawPayload, eventType, requestUtility);
                 })
                 .subscribeOn(Schedulers.boundedElastic())
-                .flatMap(payload ->  webhookService.processGithubWebhook(payload, eventType))
-                .then(Mono.just(ResponseEntity.ok("WEBHOOK PROCESSED")))
-                .doOnSuccess(response -> log.info("=== WEBHOOK PROCESSED SUCCESSFULLY ==="));
-
+                .doOnNext(payload -> { //TODO replace with a queue system for better reliability
+                    webhookService.processGithubWebhook(payload, eventType)
+                            .subscribe(
+                            result -> log.info("Webhook processed successfully"),
+                            error -> log.error("Webhook processing failed", error)
+                            );
+                })
+                .then(Mono.just(ResponseEntity.accepted().body("WEBHOOK ACCEPTED")));
     }
 
 

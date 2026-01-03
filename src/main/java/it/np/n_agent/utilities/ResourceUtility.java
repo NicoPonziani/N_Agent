@@ -1,5 +1,6 @@
 package it.np.n_agent.utilities;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.np.n_agent.exception.WebhookMainException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,15 @@ public class ResourceUtility {
         } catch (IOException e) {
             log.error("Failed to read prompt file: {}", promptPath, e);
             throw new WebhookMainException(String.format("Failed to read prompt file: %s", promptPath), HttpStatus.INTERNAL_SERVER_ERROR,e);
+        }
+    }
+
+    public static <T> T readObject(ObjectMapper mapper, Class<T> valueType, String jsonContent){
+        log.info("Reading object of type: {}", valueType.getSimpleName());
+        try{
+            return mapper.readValue(jsonContent, valueType);
+        } catch (IOException e){
+            throw new WebhookMainException(String.format("Failed to read object of type: %s", valueType.getSimpleName()), HttpStatus.INTERNAL_SERVER_ERROR,e);
         }
     }
 

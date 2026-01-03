@@ -24,8 +24,14 @@ spring:
           max-tokens: 2000
           frequency-penalty: 0.5
           presence-penalty: 0.3
-      connection-timeout: 10s
-      read-timeout: 120s
+      connection-timeout: 60s
+      read-timeout: 300s
+      retry:
+        max-attempts: 3
+        backoff:
+          initial-interval: 1000
+          multiplier: 2
+          max-interval: 5000
 
 server:
   port: ${SERVER_PORT:8080}

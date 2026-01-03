@@ -16,13 +16,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SynchronousSink;
-import reactor.core.scheduler.Schedulers;
 
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
-import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.*;
 import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto;
+import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.AnalysisRulesDto;
+import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.NotificationSettingsDto;
+import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.TriggerSettingsDto;
 
 @Service
 public class WebhookService {
@@ -147,8 +148,7 @@ public class WebhookService {
                             )
                             .delayUntil((input) -> aiService.handleAiResponse(input.analysisResult, prNumber, installationId))
                             .flatMap(input -> notificationService.sendNotification(input.webhookBaseInfo,input.analysisResult,input.notificationSettingsDto))
-                            .defaultIfEmpty(false)
-                            .subscribeOn(Schedulers.boundedElastic());
+                            .defaultIfEmpty(false);
     }
 
 
