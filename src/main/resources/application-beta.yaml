@@ -26,6 +26,12 @@ spring:
           presence-penalty: 0.3
       connection-timeout: 60s
       read-timeout: 300s
+      retry:
+        max-attempts: 3
+        backoff:
+          initial-interval: 1000
+          multiplier: 2
+          max-interval: 5000
 
 server:
   port: ${SERVER_PORT:8080}
@@ -58,7 +64,7 @@ logging:
   level:
     root: INFO
     it.np.n_agent: DEBUG
-    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: WARNING
+    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG
     org.springframework.data.mongodb.core: INFO
     org.springframework.web.reactive: INFO
   pattern:

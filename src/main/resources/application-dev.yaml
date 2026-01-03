@@ -25,6 +25,13 @@ spring:
           presence-penalty: 0.3
       connection-timeout: 10s
       read-timeout: 120s
+      retry:
+        max-attempts: 3
+        backoff:
+          initial-interval: 1000
+          multiplier: 2
+          max-interval: 5000
+
 
 server:
   port: ${SERVER_PORT:8080}

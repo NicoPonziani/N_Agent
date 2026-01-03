@@ -38,24 +38,6 @@ public class RetryConfiguration {
     }
 
     /**
-     * Retry configuration for AI calls (OpenAI, Anthropic, etc.).
-     * - Max 2 attempts (AI calls are expensive)
-     * - Backoff: 1s, 2s
-     * - Retry on timeout and connection errors
-     */
-    @Bean
-    public Retry aiRetry() {
-        RetryConfig config = RetryConfig.custom()
-                .maxAttempts(2)
-                .intervalFunction(attempt -> 1000L * (long) Math.pow(2, attempt - 1))
-                .retryOnException(this::isAiRetryableError)
-                .build();
-
-        RetryRegistry registry = RetryRegistry.of(config);
-        return registry.retry("aiRetry");
-    }
-
-    /**
      * Retry configuration for GitHub API calls.
      * - Max 3 attempts
      * - Backoff: 500ms, 1s, 2s
@@ -92,19 +74,6 @@ public class RetryConfiguration {
                 || throwable instanceof MongoSocketException
                 || throwable instanceof MongoTimeoutException
                 || (throwable.getCause() != null && isMongoRetryableError(throwable.getCause()));
-    }
-
-    /**
-     * Checks if an AI error is retryable.
-     * Typically timeout or connection errors, not input validation errors.
-     */
-    private boolean isAiRetryableError(Throwable throwable) {
-        return throwable instanceof TimeoutException
-                || throwable instanceof java.net.SocketTimeoutException
-                || throwable instanceof java.net.ConnectException
-                || (throwable.getMessage() != null &&
-                    (throwable.getMessage().contains("timeout") ||
-                     throwable.getMessage().contains("connection")));
     }
 
     /**
