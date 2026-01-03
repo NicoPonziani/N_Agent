@@ -1,6 +1,8 @@
 package it.np.n_agent.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.np.n_agent.ai.dto.CodeAnalysisResult;
+import it.np.n_agent.ai.enums.RecommendationEnum;
 import it.np.n_agent.ai.functions.HistoricalIssuesFunction;
 import it.np.n_agent.entity.HistoricalIssueEntity;
 import it.np.n_agent.exception.AiAnalysisException;
@@ -17,12 +19,10 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.List;
 
 import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.AnalysisRulesDto;
-import static it.np.n_agent.utilities.ResourceUtility.loadPrompt;
+import static it.np.n_agent.utilities.ResourceUtility.loadPromptAsString;
 
 @Service
 public class AiService {
@@ -32,7 +32,7 @@ public class AiService {
     private final ChatClient chatModel;
     private final IssueRepository issueRepository;
 
-    public AiService(@Qualifier("OPEN_AI") ChatClient chatModel, IssueRepository issueRepository){
+    public AiService(@Qualifier("OPEN_AI") ChatClient chatModel, IssueRepository issueRepository, ObjectMapper objectMapper){
         this.chatModel = chatModel;
         this.issueRepository = issueRepository;
     }
@@ -49,23 +49,31 @@ public class AiService {
      */
     public Mono<CodeAnalysisResult> analyzeDiff(String diff, AnalysisRulesDto rules){
         log.info("Analyzing diff START");
-        return Mono.fromCallable(() ->
-            chatModel.prompt(loadPrompt("historical_issue_prompt.md").getContentAsString(StandardCharsets.UTF_8))
-                     .user(PromptUtility.generatePullRequestPrompt("user_analysis_rules.md", rules,diff))
-                     .toolCallbacks(ToolCallbacks.from(new HistoricalIssuesFunction(issueRepository)))
-                     .call()
-                     .entity(CodeAnalysisResult.class)
-        )
-        .subscribeOn(Schedulers.boundedElastic())
-        .timeout(Duration.ofSeconds(300)) // 5 minutes timeout for AI analysis
-        .doOnSuccess(response -> log.info("AI analysis completed: {}",response))
-        .onErrorMap(error -> {
-            if (error instanceof java.util.concurrent.TimeoutException) {
-                log.error("AI analysis timeout after 300 seconds");
-                return new AiAnalysisException("AI analysis timeout - diff might be too large", HttpStatus.GATEWAY_TIMEOUT, error);
-            }
-            return new AiAnalysisException("Failed to analyze code diff", HttpStatus.INTERNAL_SERVER_ERROR, error);
-        });
+
+        long startNanos = System.nanoTime();
+
+        return Mono.fromSupplier(() ->
+                        chatModel.prompt(loadPromptAsString("historical_issue_prompt.md"))
+                        .user(PromptUtility.generatePullRequestPrompt("user_analysis_rules.md", rules, diff))
+                        .toolCallbacks(ToolCallbacks.from(new HistoricalIssuesFunction(issueRepository)))
+                        .call()
+                        .entity(CodeAnalysisResult.class)
+                )
+                .subscribeOn(Schedulers.boundedElastic())
+                .doOnSuccess(response -> log.info("AI analysis completed {}",response))
+                .doFinally(st -> {
+                    switch (st){
+                        case CANCEL -> log.error("AI analysis errored after {} ms", (System.nanoTime() - startNanos) / 1_000_000);
+                        case ON_ERROR -> log.error("AI analysis cancelled after {} ms", (System.nanoTime() - startNanos) / 1_000_000);
+                        default -> log.info("AI analysis completed successfully after {} ms", (System.nanoTime() - startNanos) / 1_000_000);
+                    }
+                })
+                .onErrorMap(error -> {
+                    if (error instanceof java.util.concurrent.TimeoutException) {
+                        return new AiAnalysisException("AI analysis timeout", HttpStatus.SERVICE_UNAVAILABLE, error);
+                    }
+                    return new AiAnalysisException("Failed to analyze code diff", HttpStatus.INTERNAL_SERVER_ERROR, error);
+                });
     }
 
     /**
@@ -83,7 +91,18 @@ public class AiService {
     public Mono<CodeAnalysisResult> handleAiResponse(CodeAnalysisResult analysis,Long prNumber, Long userInstallationId) {
         log.info("Handling AI response with recommendation: {} \nsummary: {}",analysis.getRecommendation(), analysis.getSummary());
 
-        return switch (analysis.getRecommendation()) {
+        RecommendationEnum recommendation = analysis.getRecommendation();
+        if (recommendation == null) {
+            boolean noIssues = analysis.getIssues() == null || analysis.getIssues().isEmpty();
+            recommendation = noIssues ? RecommendationEnum.APPROVE : RecommendationEnum.COMMENT;
+            log.warn("AI response missing recommendation. Applying fallback={} (issuesCount={})", recommendation, analysis.getIssuesCount());
+            analysis.setRecommendation(recommendation);
+            if (analysis.getSummary() == null && noIssues) {
+                analysis.setSummary("No issues found");
+            }
+        }
+
+        return switch (recommendation) {
             case APPROVE -> {
                 log.info("No issues found");
                 yield Mono.just(analysis);

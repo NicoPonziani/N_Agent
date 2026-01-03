@@ -42,3 +42,7 @@ build/
 
 ### GITHUB WORKFLOWS (optional - uncomment if needed) ###
 .github/*
+
+### LOGS ###
+*.log
+logs/

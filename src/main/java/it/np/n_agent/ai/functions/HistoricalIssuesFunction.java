@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.lang.NonNull;
-import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.List;
@@ -35,13 +34,16 @@ public class HistoricalIssuesFunction {
             @ToolParam(description = "Max results to return (default 5)")
             Integer maxResults
     ) {
-        log.info("🔍 AI called searchSimilarIssues: type={}, file={}, max={}", keyword, fileOrRepo, maxResults);
+        int effectiveMax = (maxResults != null && maxResults > 0) ? maxResults : 5;
+        log.info("🔍 AI called searchSimilarIssues: type={}, file={}, max={}", keyword, fileOrRepo, effectiveMax);
 
         return issueRepository.findSimilarIssues(keyword, fileOrRepo)
-                .take(maxResults != null ? maxResults : 5)
+                .take(effectiveMax)
                 .collectList()
+                .timeout(Duration.ofSeconds(8))
                 .doOnSuccess(issues -> log.info("Found {} similar issues", issues.size()))
-                .subscribeOn(Schedulers.boundedElastic())
+                .doOnError(e -> log.error("Historical issues lookup failed (returning empty list): {}", e.toString()))
+                .onErrorReturn(List.of())
                 .toFuture();
     }
 
