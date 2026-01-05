@@ -1,6 +1,5 @@
 package it.np.n_agent.github.enums;
 
-import it.np.n_agent.dto.UserSettingDto;
 import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.TriggerSettingsDto;
 
 
@@ -27,8 +26,8 @@ public enum ActionType {
     public static boolean isValidActionPR(TriggerSettingsDto setting,String action) {
         return switch(fromValue(action)){
             case OPENED -> setting.getOnPROpen();
+            case SYNCHRONIZE,EDITED -> setting.getOnPRUpdate();
             case REOPENED -> setting.getOnPRReopen();
-            case EDITED -> setting.getOnPRUpdate();
             default -> false;
         };
     }
