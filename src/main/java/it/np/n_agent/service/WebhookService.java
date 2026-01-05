@@ -135,7 +135,7 @@ public class WebhookService {
                 .owner(owner)
                 .repo(repo)
                 .build();
-
+        log.debug("Base webhook info constructed: {}", baseInfo);
         return userSettingService.getUserSettings(installationId)
                             .handle(sinkActionTriggers(payload))
                             .zipWhen(
@@ -143,7 +143,7 @@ public class WebhookService {
                                     (setting, diff) -> buildWebhookZipInput(diff, setting, repo,baseInfo)
                             )
                             .zipWhen(
-                                    input -> aiService.analyzeDiff(input.diff(),input.rules()),
+                                    input -> aiService.analyzeDiff(input.diff(),input.rules(),input.webhookBaseInfo.installationId,input.webhookBaseInfo.repo),
                                     WebhookZipInput::withAnalysisResult
                             )
                             .delayUntil((input) -> aiService.handleAiResponse(input.analysisResult, prNumber, installationId))
@@ -181,6 +181,7 @@ public class WebhookService {
     private static BiConsumer<UserSettingDto, SynchronousSink<UserSettingDto>> sinkActionTriggers(GHWebhookPrPayload payload) {
         return (setting, sink) -> {
             String repo = payload.getRepository().getName();
+            log.debug("Checking triggers for repository: {} and action: {}", repo, payload.getAction());
             Optional<UserSettingDto.RepositoryConfigDto> repoConfigOpt =
                     setting.getRepositories().stream()
                             .filter(r -> r.getRepoName().equalsIgnoreCase(repo))

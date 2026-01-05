@@ -1,6 +1,6 @@
 # TOOL USAGE INSTRUCTIONS
 
-You have access to `searchSimilarIssues(keyword, fileOrRepo, maxResults)`.
+You have access to `searchSimilarIssues(keyword, fileOrRepo, userInstallationId, maxResults)`.
 
 ## When to use it
 After identifying each issue in the code diff, call this tool to find similar historical issues.
@@ -15,7 +15,8 @@ Git diffs show filenames like this:
 
 ## Parameters
 - `keyword`: Issue type - one of: "nullpointer", "security", "performance", "complexity", "todo", "debt"
-- `fileOrRepo`: Extracted filename from diff
+- `fileOrRepo`: Extracted filename from diff (use this first) or repository name '%s'
+- `userInstallationId`: %s
 - `maxResults`: Always use 5
 
 ## Workflow

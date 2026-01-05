@@ -25,11 +25,14 @@ public class HistoricalIssuesFunction {
     @Tool(description = "Search for SIMILAR code issues in historical database based on issue type and file. " +
                         "ALWAYS use this FIRST when analyzing code diffs to check past solutions!")
     public CompletableFuture<List<HistoricalIssueEntity>> searchSimilarIssues(
-            @ToolParam(description = "Keyword or issue type to search")
+            @ToolParam(description = "Issue type to search")
             String keyword,
 
             @ToolParam(description = "File or repository name to filter")
             String fileOrRepo,
+
+            @ToolParam(description = "Owner's installation ID")
+            Long userInstallationId,
 
             @ToolParam(description = "Max results to return (default 5)")
             Integer maxResults
@@ -37,7 +40,7 @@ public class HistoricalIssuesFunction {
         int effectiveMax = (maxResults != null && maxResults > 0) ? maxResults : 5;
         log.info("🔍 AI called searchSimilarIssues: type={}, file={}, max={}", keyword, fileOrRepo, effectiveMax);
 
-        return issueRepository.findSimilarIssues(keyword, fileOrRepo)
+        return issueRepository.findSimilarIssues(keyword, fileOrRepo, userInstallationId)
                 .take(effectiveMax)
                 .collectList()
                 .timeout(Duration.ofSeconds(8))

@@ -16,6 +16,9 @@ public class HistoricalIssueEntity {
     @Id
     private String id;
 
+    @Field("file_path")
+    private String filePath;
+
     @Field("repository")
     private String repository;
 

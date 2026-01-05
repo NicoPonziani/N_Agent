@@ -25,4 +25,14 @@ public class PromptUtility {
                 diff
         );
     }
+
+    public static String generateHistoricalIssuePrompt(String promptPath, String repository, Long installationId){
+        log.info("Generating historical issue prompt for repository: {}", repository);
+        String basePrompt = ResourceUtility.loadPromptAsString(promptPath);
+
+        return String.format(basePrompt,
+                repository,
+                installationId
+        );
+    }
 }

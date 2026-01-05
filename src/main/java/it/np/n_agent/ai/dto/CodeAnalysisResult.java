@@ -15,6 +15,9 @@ public class CodeAnalysisResult {
     @JsonPropertyDescription("Brief overview of the analysis")
     private String summary;
 
+    @JsonPropertyDescription("Repository name or identifier")
+    private String repository;
+
     @JsonPropertyDescription("List of identified code issues")
     private List<CodeIssue> issues = new ArrayList<>();
 

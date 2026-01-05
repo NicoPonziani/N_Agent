@@ -1,6 +1,5 @@
 package it.np.n_agent.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.np.n_agent.ai.dto.CodeAnalysisResult;
 import it.np.n_agent.ai.enums.RecommendationEnum;
 import it.np.n_agent.ai.functions.HistoricalIssuesFunction;
@@ -22,7 +21,6 @@ import reactor.core.scheduler.Schedulers;
 import java.util.List;
 
 import static it.np.n_agent.dto.UserSettingDto.RepositoryConfigDto.AnalysisRulesDto;
-import static it.np.n_agent.utilities.ResourceUtility.loadPromptAsString;
 
 @Service
 public class AiService {
@@ -32,7 +30,7 @@ public class AiService {
     private final ChatClient chatModel;
     private final IssueRepository issueRepository;
 
-    public AiService(@Qualifier("OPEN_AI") ChatClient chatModel, IssueRepository issueRepository, ObjectMapper objectMapper){
+    public AiService(@Qualifier("OPEN_AI") ChatClient chatModel, IssueRepository issueRepository){
         this.chatModel = chatModel;
         this.issueRepository = issueRepository;
     }
@@ -47,13 +45,12 @@ public class AiService {
      * @return Mono emitting CodeAnalysisResult with detected issues and recommendations
      * @throws AiAnalysisException if AI analysis fails
      */
-    public Mono<CodeAnalysisResult> analyzeDiff(String diff, AnalysisRulesDto rules){
+    public Mono<CodeAnalysisResult> analyzeDiff(String diff, AnalysisRulesDto rules,Long installationId, String repository) {
         log.info("Analyzing diff START");
-
         long startNanos = System.nanoTime();
 
         return Mono.fromSupplier(() ->
-                        chatModel.prompt(loadPromptAsString("historical_issue_prompt.md"))
+                        chatModel.prompt(PromptUtility.generateHistoricalIssuePrompt("historical_issue_prompt.md", repository,installationId))
                         .user(PromptUtility.generatePullRequestPrompt("user_analysis_rules.md", rules, diff))
                         .toolCallbacks(ToolCallbacks.from(new HistoricalIssuesFunction(issueRepository)))
                         .call()
@@ -91,16 +88,7 @@ public class AiService {
     public Mono<CodeAnalysisResult> handleAiResponse(CodeAnalysisResult analysis,Long prNumber, Long userInstallationId) {
         log.info("Handling AI response with recommendation: {} \nsummary: {}",analysis.getRecommendation(), analysis.getSummary());
 
-        RecommendationEnum recommendation = analysis.getRecommendation();
-        if (recommendation == null) {
-            boolean noIssues = analysis.getIssues() == null || analysis.getIssues().isEmpty();
-            recommendation = noIssues ? RecommendationEnum.APPROVE : RecommendationEnum.COMMENT;
-            log.warn("AI response missing recommendation. Applying fallback={} (issuesCount={})", recommendation, analysis.getIssuesCount());
-            analysis.setRecommendation(recommendation);
-            if (analysis.getSummary() == null && noIssues) {
-                analysis.setSummary("No issues found");
-            }
-        }
+        RecommendationEnum recommendation = getRecommendation(analysis);
 
         return switch (recommendation) {
             case APPROVE -> {
@@ -117,7 +105,8 @@ public class AiService {
 
                 List<HistoricalIssueEntity> issues = analysis.getIssues().stream()
                         .map(issue -> HistoricalIssueEntity.builder()
-                                .repository(issue.getFile())
+                                .repository(analysis.getRepository())
+                                .filePath(issue.getFile())
                                 .type(issue.getType())
                                 .timeToFix(issue.getEstimatedFixTime())
                                 .resolution(issue.getSuggestion())
@@ -133,6 +122,29 @@ public class AiService {
                         .then(Mono.just(analysis));
             }
         };
+    }
+
+    /**
+     * Ensures the AI analysis result has a valid recommendation.
+     * If missing, applies fallback logic: APPROVE if no issues, otherwise COMMENT.
+     * Logs a warning if recommendation was absent in the AI response.
+     *
+     * @param analysis AI analysis result to check
+     * @return Validated or fallback RecommendationEnum
+     */
+    private static RecommendationEnum getRecommendation(CodeAnalysisResult analysis) {
+        RecommendationEnum recommendation = analysis.getRecommendation();
+        log.info("Original AI recommendation: {}", recommendation);
+        if (recommendation == null) {
+            boolean noIssues = analysis.getIssues() == null || analysis.getIssues().isEmpty();
+            recommendation = noIssues ? RecommendationEnum.APPROVE : RecommendationEnum.COMMENT;
+            log.warn("AI response missing recommendation. Applying fallback={} (issuesCount={})", recommendation, analysis.getIssuesCount());
+            analysis.setRecommendation(recommendation);
+            if (analysis.getSummary() == null && noIssues) {
+                analysis.setSummary("No issues found");
+            }
+        }
+        return recommendation;
     }
 
 }

@@ -11,10 +11,12 @@ import reactor.core.publisher.Flux;
 public interface IssueRepository extends ReactiveMongoRepository<HistoricalIssueEntity,String> {
 
 
-    @Query("{ $or: [ "
-            + "  {'type': { $regex: ?0, $options: 'i' }}, "
-            + "  {'resolution': { $regex: ?0, $options: 'i' }} "
-            + "], 'repository': { $regex: ?1, $options: 'i' } }")
-    Flux<HistoricalIssueEntity> findSimilarIssues(String keyword, String repository);
+    @Query("{ $or: [ " +
+             "  {'type': { $regex: ?0, $options: 'i' }}, " +
+             "], " +
+             "'repository': { $regex: ?1, $options: 'i' } " +
+             "'user_installation_id': ?2" +
+           "}")
+    Flux<HistoricalIssueEntity> findSimilarIssues(String keyword, String fileOrRepo, Long userInstallationId);
 
 }
