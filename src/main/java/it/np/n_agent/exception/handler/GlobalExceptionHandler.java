@@ -74,7 +74,9 @@ public class GlobalExceptionHandler {
         log.error("Handling {}: {} - Error in class {} method {}", ex.getClass().getName(), ex.getMessage(), className, methodName);
 
         if(ex instanceof WebhookMainException webhookEx){
-            log.error("WebhookMainException details:", webhookEx.getCause());
+            log.error("WebhookMainException message:{} details:",webhookEx.getMessage(), webhookEx.getCause());
+        } else {
+            log.error("Exception details:", ex);
         }
     }
 }

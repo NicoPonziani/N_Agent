@@ -269,6 +269,7 @@ public class UserSettingService {
                 .map(GHWebhookInstallationRepoPayload.Repository::getId)
                 .toList();
         return (userSetting,sink) -> {
+            log.debug("Attempting to remove repositories with IDs {} from installation {}",repoIdsToRemove, userSetting.getGithubInstallationId());
             List<RepositoryConfig> repos = new ArrayList<>(userSetting.getRepositories());
             boolean removed = repos.removeIf(repo -> repoIdsToRemove.contains(repo.getRepoId()));
             if (removed) {
@@ -288,7 +289,7 @@ public class UserSettingService {
             List<Long> existingRepoIds = userSetting.getRepositories().stream()
                     .map(RepositoryConfig::getRepoId)
                     .toList();
-
+            log.debug("Existing repository IDs for installation {}: {}", userSetting.getGithubInstallationId(), existingRepoIds);
             List<RepositoryConfig> newRepos = repositories.stream()
                     .filter(repo -> !existingRepoIds.contains(repo.getId()))
                     .map(repo -> RepositoryConfig.builder()
