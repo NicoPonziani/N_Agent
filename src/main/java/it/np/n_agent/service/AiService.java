@@ -115,9 +115,9 @@ public class AiService {
                                 .userInstallationId(userInstallationId)
                                 .build()
                         ).toList();
-
+                log.debug("Historical issues to save: {}", issues);
                 yield issueRepository.saveAll(issues)
-                        .doOnNext(saved -> log.info("Saved issue: {}", saved))
+                        .doOnNext(saved -> log.info("Saved issue: {}", saved.getId()))
                         .onErrorMap(error -> new MongoDbException("Failed to save historical issues", HttpStatus.INTERNAL_SERVER_ERROR, error))
                         .then(Mono.just(analysis));
             }
